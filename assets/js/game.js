@@ -13,7 +13,7 @@ var SKIP_FRAME = 0;
 var skipper = 0;
 
 var SNAKE_MATERIAL = new THREE.MeshLambertMaterial({
-    map: THREE.ImageUtils.loadTexture('./textures/skin.png')
+    map: THREE.ImageUtils.loadTexture('./assets/textures/skin.png')
 });
 
 
@@ -81,17 +81,17 @@ function initInin() {
 
 
     var wallMaterial = new THREE.MeshLambertMaterial({
-        map: THREE.ImageUtils.loadTexture('./textures/wall.png')
+        map: THREE.ImageUtils.loadTexture('./assets/textures/wall.png')
     });
     wallMaterial.side = THREE.BackSide;
 
     var skyMaterial = new THREE.MeshLambertMaterial({
-        map: THREE.ImageUtils.loadTexture('./textures/sky.png')
+        map: THREE.ImageUtils.loadTexture('./assets/textures/sky.png')
     });
     skyMaterial.side = THREE.BackSide;
 
     var groundMaterial = new THREE.MeshLambertMaterial({
-        map: THREE.ImageUtils.loadTexture('./textures/ground.png')
+        map: THREE.ImageUtils.loadTexture('./assets/textures/ground.png')
     });
     groundMaterial.side = THREE.BackSide;
 
@@ -124,7 +124,7 @@ function initInin() {
 
     //var appleMaterial = new THREE.MeshLambertMaterial({color: 'red'});
     var appleMaterial = new THREE.MeshLambertMaterial({
-        map: THREE.ImageUtils.loadTexture('./textures/apple.png')
+        map: THREE.ImageUtils.loadTexture('./assets/textures/apple.png')
     });
 
     var appleMesh = new THREE.Mesh(appleGeometry, appleMaterial);
@@ -225,7 +225,7 @@ function initInin() {
     cameraBG.position.z = 500;
     sceneBG = new THREE.Scene();
 
-    var materialColor = new THREE.MeshBasicMaterial({ map: THREE.ImageUtils.loadTexture("./textures/starry_background.jpg"), depthTest: false });
+    var materialColor = new THREE.MeshBasicMaterial({ map: THREE.ImageUtils.loadTexture("./assets/textures/starry_background.jpg"), depthTest: false });
     var bgPlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), materialColor);
     bgPlane.position.z = -1000;
     bgPlane.scale.set(window.innerWidth * 2, window.innerHeight * 2, 1);
