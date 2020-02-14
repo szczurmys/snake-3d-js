@@ -1,4 +1,4 @@
-function SelectedDirection() {
+export function SelectedDirection() {
     this.up = false;
     this.down = false;
     this.left = false;

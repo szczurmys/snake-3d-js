@@ -1,5 +1,4 @@
-/*jslint browser: true*/
-/*global THREE*/
+import * as THREE from 'three';
 
 function LocationAndRotation(location, angleRightLeft, angleUpDown) {
     'use strict';
@@ -8,7 +7,7 @@ function LocationAndRotation(location, angleRightLeft, angleUpDown) {
     this.angleUpDown = angleUpDown;
 }
 
-function Tail(nameObj, vector) {
+export function Tail(nameObj, vector) {
     'use strict';
     var name = nameObj;
     var lar = [];

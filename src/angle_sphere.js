@@ -1,4 +1,4 @@
-function AngleSphere() {
+export function AngleSphere() {
     this.upDown = 0.0;
     this.leftRight = 0.0;
     this.ToString = function () {
