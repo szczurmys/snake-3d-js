@@ -1,5 +1,15 @@
-/*jslint browser: true*/
-/*global THREE, Tail, dat, SelectedDirection, AngleSphere*/
+import * as THREE from 'three';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { CopyShader } from 'three/examples/jsm/shaders/CopyShader.js';
+import * as dat from 'dat.gui';
+import * as Stats from 'stats.js';
+
+import {Tail} from './tail.js';
+import {SelectedDirection} from './selected_direction.js';
+import {AngleSphere} from './angle_sphere.js';
+import {Arrow3DGeometry} from './arrow_3d.js';
 
 var TAIL_NAME = "tails_";
 var APPLE_NAME = "apple";
@@ -13,8 +23,30 @@ var SKIP_FRAME = 0;
 var skipper = 0;
 
 var SNAKE_MATERIAL = new THREE.MeshLambertMaterial({
-    map: THREE.ImageUtils.loadTexture('./assets/textures/skin.png')
+    map: new THREE.TextureLoader().load('./assets/textures/skin.png')
 });
+
+var wallMaterial = new THREE.MeshLambertMaterial({
+    map: new THREE.TextureLoader().load('./assets/textures/wall.png'),
+    side: THREE.BackSide
+});
+
+var skyMaterial = new THREE.MeshLambertMaterial({
+    map: new THREE.TextureLoader().load('./assets/textures/sky.png'),
+    side: THREE.BackSide
+});
+
+var groundMaterial = new THREE.MeshLambertMaterial({
+    map: new THREE.TextureLoader().load('./assets/textures/ground.png'),
+    side: THREE.BackSide
+});
+
+//var appleMaterial = new THREE.MeshLambertMaterial({color: 'red'});
+var appleMaterial = new THREE.MeshLambertMaterial({
+    map: new THREE.TextureLoader().load('./assets/textures/apple.png')
+});
+
+var backgroundMaterial = new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load("./assets/textures/starry_background.jpg"), depthTest: false });
 
 
 var SIZE_CUBE = 200.0;
@@ -56,6 +88,16 @@ var canvas;
 var arrow;
 
 
+
+var rotLeftRight = 0.0;
+var rotUpDown = 0.0;
+var jumps = 0;
+var point = 0;
+var startGame = true;
+var endGame = false;
+var pause = false;
+var refreshText = true;
+
 /**
  * Initializes the scene, camera and objects. Called when the window is
  * loaded by using window.onload (see below)
@@ -77,23 +119,7 @@ function initInin() {
     renderer = new THREE.WebGLRenderer();
     renderer.setClearColor(0x000000, 1.0);
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMapEnabled = true;
-
-
-    var wallMaterial = new THREE.MeshLambertMaterial({
-        map: THREE.ImageUtils.loadTexture('./assets/textures/wall.png')
-    });
-    wallMaterial.side = THREE.BackSide;
-
-    var skyMaterial = new THREE.MeshLambertMaterial({
-        map: THREE.ImageUtils.loadTexture('./assets/textures/sky.png')
-    });
-    skyMaterial.side = THREE.BackSide;
-
-    var groundMaterial = new THREE.MeshLambertMaterial({
-        map: THREE.ImageUtils.loadTexture('./assets/textures/ground.png')
-    });
-    groundMaterial.side = THREE.BackSide;
+    renderer.shadowMap.enabled = true;
 
     var materialsArea = [
         wallMaterial,
@@ -111,7 +137,7 @@ function initInin() {
 
     // create a cube
     var arenaGeometry = new THREE.BoxGeometry(SIZE_CUBE, SIZE_CUBE, SIZE_CUBE, 1, 1, 1);
-    var arenaMaterial = new THREE.MeshFaceMaterial(materialsArea);
+    var arenaMaterial = materialsArea;
     arenaMaterial.side = THREE.BackSide;
     var arena = new THREE.Mesh(arenaGeometry, arenaMaterial);
     arena.name = 'arena';
@@ -122,18 +148,13 @@ function initInin() {
     // create a cube
     var appleGeometry = new THREE.SphereGeometry(RADIUS_SNAKE, SPHERE_FRAGMENT, SPHERE_FRAGMENT);
 
-    //var appleMaterial = new THREE.MeshLambertMaterial({color: 'red'});
-    var appleMaterial = new THREE.MeshLambertMaterial({
-        map: THREE.ImageUtils.loadTexture('./assets/textures/apple.png')
-    });
-
     var appleMesh = new THREE.Mesh(appleGeometry, appleMaterial);
     appleMesh.name = apple.getName();
     appleMesh.castShadow = true;
 
     scene.add(appleMesh);
     
-    var arrowGeometry = new THREE.Arrow3DGeometry(
+    var arrowGeometry = new Arrow3DGeometry(
             10, 8,
             3, 10,
             0, 1
@@ -155,9 +176,9 @@ function initInin() {
 
     // add spotlight for the shadows
     var spotLight = new THREE.SpotLight(0xffffff);
-    spotLight.position = new THREE.Vector3(10, 20, 20);
-    spotLight.shadowCameraNear = 20;
-    spotLight.shadowCameraFar = 50;
+    spotLight.position.set(10, 20, 20);
+    spotLight.shadow.camera.near = 20;
+    spotLight.shadow.camera.far = 50;
     spotLight.castShadow = true;
     spotLight.name = SPOT_LIGHT_NAME;
     scene.add(spotLight);
@@ -165,7 +186,7 @@ function initInin() {
     
     // add sunlight (light
     var directionalLight = new THREE.DirectionalLight(0xdddddd, 0.5);
-    directionalLight.position = new THREE.Vector3(200, 10, -50);
+    directionalLight.position.set(200, 10, -50);
     directionalLight.name = DIRECTIONAL_LIGHT_NAME;
     scene.add(directionalLight);
 
@@ -225,24 +246,23 @@ function initInin() {
     cameraBG.position.z = 500;
     sceneBG = new THREE.Scene();
 
-    var materialColor = new THREE.MeshBasicMaterial({ map: THREE.ImageUtils.loadTexture("./assets/textures/starry_background.jpg"), depthTest: false });
-    var bgPlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), materialColor);
+    var bgPlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), backgroundMaterial);
     bgPlane.position.z = -1000;
     bgPlane.scale.set(window.innerWidth * 2, window.innerHeight * 2, 1);
     sceneBG.add(bgPlane);
 
     // setup the composer steps
     // first render the background
-    var bgPass = new THREE.RenderPass(sceneBG, cameraBG);
+    var bgPass = new RenderPass(sceneBG, cameraBG);
     // next render the scene (rotating earth), without clearing the current output
-    var renderPass = new THREE.RenderPass(scene, camera);
+    var renderPass = new RenderPass(scene, camera);
     renderPass.clear = false;
     // finally copy the result to the screen
-    var effectCopy = new THREE.ShaderPass(THREE.CopyShader);
+    var effectCopy = new ShaderPass(CopyShader);
     effectCopy.renderToScreen = true;
 
     // add these passes to the composer
-    composer = new THREE.EffectComposer(renderer);
+    composer = new EffectComposer(renderer);
     composer.addPass(bgPass);
     composer.addPass(renderPass);
     composer.addPass(effectCopy);
@@ -262,7 +282,6 @@ function initInin() {
     // by requestAnimationFrame
     render();
 }
-
 
 function addControlGui(controlObject) {
     var gui = new dat.GUI();
@@ -412,7 +431,7 @@ function render() {
             var previousLocation = tails[0].location;
             moveSnake = tails[0].Move(rotLeftRight, rotUpDown);
             var head = scene.getObjectByName(tails[0].getName());
-            head.position = tails[0].location;
+            head.position.set(tails[0].location);
             head.rotation.y = rotLeftRight;
             
             //for (var i = tails.length - 1; i >= 1; i -= 1)
@@ -437,7 +456,7 @@ function render() {
                     }
                 }
                 var t = scene.getObjectByName(tails[i].getName());
-                t.position = tails[i].location;
+                t.position.set(tails[i].location);
                 t.rotation.y = tails[i].angleRightLeft;
             }
 
@@ -548,29 +567,29 @@ function render() {
 
     //////////////////USTAWIENIE KAMERY
 
-    camera.position = vEye;
+    camera.position.set(vEye);
     camera.up = vUp;
     camera.lookAt(vTarget);
 
 
                 
     var s = scene.getObjectByName(SPOT_LIGHT_NAME);
-    s.position = new THREE.Vector3(
+    s.position.set(
             tails[0].location.x,
             tails[0].location.y,
             tails[0].location.z);
-    s.target.position = new THREE.Vector3(
+    s.target.position.set(
             vTarget.x,
             vTarget.y,
             vTarget.z);
             
     var d = scene.getObjectByName(DIRECTIONAL_LIGHT_NAME);
-    d.position = new THREE.Vector3(
+    d.position.set(
             tails[0].location.x,
             tails[0].location.y,
             tails[0].location.z);
             
-    d.target.position = new THREE.Vector3(
+    d.target.position.set(
             vTarget.x,
             vTarget.y,
             vTarget.z);
@@ -618,7 +637,7 @@ function randAppleLocation()
     apple.location = v;
     var name = apple.getName();
     var appleMesh = scene.getObjectByName(name);
-    appleMesh.position = v;
+    appleMesh.position.set(v);
     
     arrow.lookAt(apple.location);
 }
@@ -687,7 +706,7 @@ function createTail(vector) {
     var snake = new THREE.Mesh(snakeGeometry, SNAKE_MATERIAL);
     snake.name = tail.getName();
     snake.castShadow = true;
-    snake.position = tail.location;
+    snake.position.set(tail.location);
 
     scene.add(snake);
 }

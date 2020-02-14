@@ -1,8 +1,6 @@
-/*jslint browser: true*/
-/*global THREE*/
+import * as THREE from 'three';
 
-
-THREE.Arrow3DGeometry = function (
+export function Arrow3DGeometry(
         widthHead,
         heightHead,
         widthShaft, 
@@ -13,7 +11,7 @@ THREE.Arrow3DGeometry = function (
     bevel = (typeof bevel !== 'undefined') && bevel > 0 ? bevel : 0;
 
     var extrudeSettings = {
-        amount: weight,
+        depth: weight,
         bevelEnabled: bevel > 0,
         bevelSegments: bevel,
         steps: 2,
@@ -65,13 +63,13 @@ THREE.Arrow3DGeometry = function (
     var shape = new THREE.Shape(arrowPts);
     
     var geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-    THREE.GeometryUtils.center( geometry );
+    geometry.center();
     
     var matrix = new THREE.Matrix4();
     
     matrix.makeRotationX( 90 * Math.PI / 180 );
     
-    geometry.applyMatrix(matrix);
+    geometry.applyMatrix4(matrix);
     
     return geometry;
 };

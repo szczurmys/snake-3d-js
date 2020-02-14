@@ -1,0 +1,45 @@
+{
+  "name": "snake-3d-js",
+  "version": "0.0.1",
+  "description": "Snake3D using WebGL",
+  "private": true,
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rm -Rf ./dist && webpack",
+    "buildDev": "rm -Rf ./dist && webpack --mode=development",
+    "start": "npm run build && webpack-dev-server",
+    "startDev": "npm run buildDev && webpack-dev-server --mode=development"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/szczurmys/snake-3d-js.git"
+  },
+  "keywords": [
+    "snake",
+    "3d",
+    "webgl",
+    "javascript",
+    "js"
+  ],
+  "author": "szczurmys",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/szczurmys/snake-3d-js/issues"
+  },
+  "homepage": "https://github.com/szczurmys/snake-3d-js#readme",
+  "dependencies": {
+    "dat.gui": "^0.7.6",
+    "lodash": "^4.17.15",
+    "stats.js": "^0.17.0",
+    "three": "^0.113.2"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "^5.1.1",
+    "webpack": "^4.41.6",
+    "webpack-cli": "^3.3.11",
+    "webpack-dev-server": "^3.10.3"
+  }
+}
