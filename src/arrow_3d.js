@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-export function Arrow3DGeometry(
+export default function Arrow3DGeometry(
         widthHead,
         heightHead,
         widthShaft, 

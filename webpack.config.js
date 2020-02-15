@@ -15,8 +15,8 @@ module.exports = {
     },
     plugins: [
         new CopyWebpackPlugin([
-            {from:'assets',to:'assets'},
-            {from:'index.html',to:'index.html'}
+            { from: 'assets', to: 'assets' },
+            { from: 'index.html', to: 'index.html' }
         ]),
     ]
 };
