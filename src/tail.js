@@ -7,7 +7,7 @@ function LocationAndRotation(location, angleRightLeft, angleUpDown) {
     this.angleUpDown = angleUpDown;
 }
 
-export function Tail(nameObj, vector) {
+export default function Tail(nameObj, vector) {
     'use strict';
     var name = nameObj;
     var lar = [];

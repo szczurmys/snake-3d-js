@@ -6,10 +6,10 @@ import { CopyShader } from 'three/examples/jsm/shaders/CopyShader.js';
 import * as dat from 'dat.gui';
 import * as Stats from 'stats.js';
 
-import {Tail} from './tail.js';
-import {SelectedDirection} from './selected_direction.js';
-import {AngleSphere} from './angle_sphere.js';
-import {Arrow3DGeometry} from './arrow_3d.js';
+import Tail from './tail';
+import SelectedDirection from './selected_direction';
+import AngleSphere from './angle_sphere';
+import Arrow3DGeometry from './arrow_3d';
 
 var TAIL_NAME = "tails_";
 var APPLE_NAME = "apple";
@@ -275,12 +275,6 @@ function initInin() {
     document.body.appendChild(renderer.domElement);
 
     newGame();
-    
-    //arrow.rotation.x = 90 * Math.PI / 180;
-    //arrow.lookAt(new THREE.Vector3(apple.location.x, apple.location.y, apple.location.z));
-    // call the render function, after the first render, interval is determined
-    // by requestAnimationFrame
-    render();
 }
 
 function addControlGui(controlObject) {
@@ -431,7 +425,7 @@ function render() {
             var previousLocation = tails[0].location;
             moveSnake = tails[0].Move(rotLeftRight, rotUpDown);
             var head = scene.getObjectByName(tails[0].getName());
-            head.position.set(tails[0].location);
+            head.position.copy(tails[0].location);
             head.rotation.y = rotLeftRight;
             
             //for (var i = tails.length - 1; i >= 1; i -= 1)
@@ -456,7 +450,7 @@ function render() {
                     }
                 }
                 var t = scene.getObjectByName(tails[i].getName());
-                t.position.set(tails[i].location);
+                t.position.copy(tails[i].location);
                 t.rotation.y = tails[i].angleRightLeft;
             }
 
@@ -567,7 +561,7 @@ function render() {
 
     //////////////////USTAWIENIE KAMERY
 
-    camera.position.set(vEye);
+    camera.position.copy(vEye);
     camera.up = vUp;
     camera.lookAt(vTarget);
 
@@ -637,7 +631,7 @@ function randAppleLocation()
     apple.location = v;
     var name = apple.getName();
     var appleMesh = scene.getObjectByName(name);
-    appleMesh.position.set(v);
+    appleMesh.position.copy(v);
     
     arrow.lookAt(apple.location);
 }
@@ -692,7 +686,8 @@ function newGame()
     updateCenterText("");
 }
 
-function createTail(vector) {
+function createTail() {
+    var vector = new THREE.Vector3();
     var i = tails.length;
     if (tails.length > 0)
         vector = tails[i - 1].location;
@@ -706,7 +701,7 @@ function createTail(vector) {
     var snake = new THREE.Mesh(snakeGeometry, SNAKE_MATERIAL);
     snake.name = tail.getName();
     snake.castShadow = true;
-    snake.position.set(tail.location);
+    snake.position.copy(tail.location);
 
     scene.add(snake);
 }
@@ -810,6 +805,12 @@ function keyUp(event) {
 
 function initBrowser() {
     initInin();
+    
+    //arrow.rotation.x = 90 * Math.PI / 180;
+    //arrow.lookAt(new THREE.Vector3(apple.location.x, apple.location.y, apple.location.z));
+    // call the render function, after the first render, interval is determined
+    // by requestAnimationFrame
+    render();
     
     // calls the handleResize function when the window is resized
     window.addEventListener('resize', handleResize, false);
