@@ -10,6 +10,7 @@ import Tail from './tail';
 import SelectedDirection from './selected_direction';
 import AngleSphere from './angle_sphere';
 import Arrow3DGeometry from './arrow_3d';
+import * as materials from './materials';
 
 var TAIL_NAME = "tails_";
 var APPLE_NAME = "apple";
@@ -21,33 +22,6 @@ var SPHERE_FRAGMENT = 40;
 
 var SKIP_FRAME = 0;
 var skipper = 0;
-
-var SNAKE_MATERIAL = new THREE.MeshLambertMaterial({
-    map: new THREE.TextureLoader().load('./assets/textures/skin.png')
-});
-
-var wallMaterial = new THREE.MeshLambertMaterial({
-    map: new THREE.TextureLoader().load('./assets/textures/wall.png'),
-    side: THREE.BackSide
-});
-
-var skyMaterial = new THREE.MeshLambertMaterial({
-    map: new THREE.TextureLoader().load('./assets/textures/sky.png'),
-    side: THREE.BackSide
-});
-
-var groundMaterial = new THREE.MeshLambertMaterial({
-    map: new THREE.TextureLoader().load('./assets/textures/ground.png'),
-    side: THREE.BackSide
-});
-
-//var appleMaterial = new THREE.MeshLambertMaterial({color: 'red'});
-var appleMaterial = new THREE.MeshLambertMaterial({
-    map: new THREE.TextureLoader().load('./assets/textures/apple.png')
-});
-
-var backgroundMaterial = new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load("./assets/textures/starry_background.jpg"), depthTest: false });
-
 
 var SIZE_CUBE = 200.0;
 var RADIUS_SNAKE = 2.0;
@@ -122,12 +96,12 @@ function initInin() {
     renderer.shadowMap.enabled = true;
 
     var materialsArea = [
-        wallMaterial,
-        wallMaterial,
-        skyMaterial,
-        groundMaterial,
-        wallMaterial,
-        wallMaterial
+        materials.wallMaterial,
+        materials.wallMaterial,
+        materials.skyMaterial,
+        materials.groundMaterial,
+        materials.wallMaterial,
+        materials.wallMaterial
     ];
 
     // now add some better lighting
@@ -137,9 +111,7 @@ function initInin() {
 
     // create a cube
     var arenaGeometry = new THREE.BoxGeometry(SIZE_CUBE, SIZE_CUBE, SIZE_CUBE, 1, 1, 1);
-    var arenaMaterial = materialsArea;
-    arenaMaterial.side = THREE.BackSide;
-    var arena = new THREE.Mesh(arenaGeometry, arenaMaterial);
+    var arena = new THREE.Mesh(arenaGeometry, materialsArea);
     arena.name = 'arena';
     arena.receiveShadow = true;
     scene.add(arena);
@@ -148,7 +120,7 @@ function initInin() {
     // create a cube
     var appleGeometry = new THREE.SphereGeometry(RADIUS_SNAKE, SPHERE_FRAGMENT, SPHERE_FRAGMENT);
 
-    var appleMesh = new THREE.Mesh(appleGeometry, appleMaterial);
+    var appleMesh = new THREE.Mesh(appleGeometry, materials.appleMaterial);
     appleMesh.name = apple.getName();
     appleMesh.castShadow = true;
 
@@ -175,13 +147,14 @@ function initInin() {
     camera.lookAt(scene.position);
 
     // add spotlight for the shadows
-    var spotLight = new THREE.SpotLight(0xffffff);
+    var spotLight = new THREE.SpotLight(0x5B5B5B);
     spotLight.position.set(10, 20, 20);
-    spotLight.shadow.camera.near = 20;
-    spotLight.shadow.camera.far = 50;
+    spotLight.shadow.camera.near = SIZE_CUBE/10;
+    spotLight.shadow.camera.far = SIZE_CUBE/4;
     spotLight.castShadow = true;
     spotLight.name = SPOT_LIGHT_NAME;
     scene.add(spotLight);
+    scene.add(spotLight.target);
     
     
     // add sunlight (light
@@ -189,6 +162,7 @@ function initInin() {
     directionalLight.position.set(200, 10, -50);
     directionalLight.name = DIRECTIONAL_LIGHT_NAME;
     scene.add(directionalLight);
+    scene.add(directionalLight.target);
 
 
 
@@ -237,16 +211,13 @@ function initInin() {
     // add extras
     addControlGui(control);
     addStatsObject();
-    
-    
-    
 
     // add background using a camera
     cameraBG = new THREE.OrthographicCamera(-window.innerWidth, window.innerWidth, window.innerHeight, -window.innerHeight, -10000, 10000);
     cameraBG.position.z = 500;
     sceneBG = new THREE.Scene();
 
-    var bgPlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), backgroundMaterial);
+    var bgPlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), materials.backgroundMaterial);
     bgPlane.position.z = -1000;
     bgPlane.scale.set(window.innerWidth * 2, window.innerHeight * 2, 1);
     sceneBG.add(bgPlane);
@@ -565,29 +536,14 @@ function render() {
     camera.up = vUp;
     camera.lookAt(vTarget);
 
-
                 
     var s = scene.getObjectByName(SPOT_LIGHT_NAME);
-    s.position.set(
-            tails[0].location.x,
-            tails[0].location.y,
-            tails[0].location.z);
-    s.target.position.set(
-            vTarget.x,
-            vTarget.y,
-            vTarget.z);
+    s.position.copy(tails[0].location);
+    s.target.position.copy(vTarget);
             
     var d = scene.getObjectByName(DIRECTIONAL_LIGHT_NAME);
-    d.position.set(
-            tails[0].location.x,
-            tails[0].location.y,
-            tails[0].location.z);
-            
-    d.target.position.set(
-            vTarget.x,
-            vTarget.y,
-            vTarget.z);
-
+    d.position.copy(tails[0].location);
+    d.target.position.copy(vTarget);
 
 
     // update stats
@@ -698,7 +654,7 @@ function createTail() {
     // create a cube
     var snakeGeometry = new THREE.SphereGeometry(RADIUS_SNAKE, SPHERE_FRAGMENT, SPHERE_FRAGMENT);
 
-    var snake = new THREE.Mesh(snakeGeometry, SNAKE_MATERIAL);
+    var snake = new THREE.Mesh(snakeGeometry, materials.snakeMaterial);
     snake.name = tail.getName();
     snake.castShadow = true;
     snake.position.copy(tail.location);
