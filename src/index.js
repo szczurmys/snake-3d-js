@@ -8,7 +8,6 @@ import * as Stats from 'stats.js';
 
 import Tail from './tail';
 import SelectedDirection from './selected_direction';
-import AngleSphere from './angle_sphere';
 import Arrow3DGeometry from './arrow_3d';
 import * as materials from './materials';
 
@@ -40,7 +39,7 @@ var view = 0;
 var jumps = 0;
 
 var tails = [];
-var apple = new Tail(APPLE_NAME);
+var apple = new Tail(APPLE_NAME, RADIUS_SNAKE);
 
 var moveSnake = new THREE.Vector3(0, 0, 1);
 var vEye = new THREE.Vector3();
@@ -79,7 +78,7 @@ var refreshText = true;
 function initInin() {
     var i;
     for (i = 0; i < START_TAILS_SNAKE; i += 1) {
-        tails.push(new Tail(TAIL_NAME + i));
+        tails.push(new Tail(TAIL_NAME + i, RADIUS_SNAKE));
     }
 
 
@@ -118,26 +117,26 @@ function initInin() {
 
 
     // create a cube
-    var appleGeometry = new THREE.SphereGeometry(RADIUS_SNAKE, SPHERE_FRAGMENT, SPHERE_FRAGMENT);
+    var appleGeometry = new THREE.SphereGeometry(apple.tailRadius, SPHERE_FRAGMENT, SPHERE_FRAGMENT);
 
     var appleMesh = new THREE.Mesh(appleGeometry, materials.appleMaterial);
     appleMesh.name = apple.getName();
     appleMesh.castShadow = true;
 
     scene.add(appleMesh);
-    
+
     var arrowGeometry = new Arrow3DGeometry(
-            10, 8,
-            3, 10,
-            0, 1
-            ); 
-    var arrowMaterial = new THREE.MeshPhongMaterial( { color: "green" } );
-    
+        10, 8,
+        3, 10,
+        0, 1
+    );
+    var arrowMaterial = new THREE.MeshPhongMaterial({ color: "green" });
+
     arrow = new THREE.Mesh(arrowGeometry, arrowMaterial);
     arrow.name = "arrow";
     scene.add(arrow);
 
-    
+
 
 
     // position and point the camera to the center of the scene
@@ -149,14 +148,14 @@ function initInin() {
     // add spotlight for the shadows
     var spotLight = new THREE.SpotLight(0x5B5B5B);
     spotLight.position.set(10, 20, 20);
-    spotLight.shadow.camera.near = SIZE_CUBE/10;
-    spotLight.shadow.camera.far = SIZE_CUBE/4;
+    spotLight.shadow.camera.near = SIZE_CUBE / 10;
+    spotLight.shadow.camera.far = SIZE_CUBE / 4;
     spotLight.castShadow = true;
     spotLight.name = SPOT_LIGHT_NAME;
     scene.add(spotLight);
     scene.add(spotLight.target);
-    
-    
+
+
     // add sunlight (light
     var directionalLight = new THREE.DirectionalLight(0xdddddd, 0.5);
     directionalLight.position.set(200, 10, -50);
@@ -169,7 +168,7 @@ function initInin() {
     // setup the control object for the control gui
     control = new function () {
         this.newGame = newGame;
-        this.delay = 20;
+        this.delay = 1;
         this.withdrwalBack = 17;
         this.withdrwalUp = 10;
         this.godMode = false;
@@ -187,7 +186,7 @@ function initInin() {
         };
         this.clearTail = function () {
             var i;
-            for (i = tails.length - 1; i >= START_TAILS_SNAKE; i  -= 1) {
+            for (i = tails.length - 1; i >= START_TAILS_SNAKE; i -= 1) {
                 var t = tails[i];
                 var name = t.getName();
                 var o = scene.getObjectByName(name);
@@ -199,12 +198,12 @@ function initInin() {
         };
         this.help = function () {
             window.alert("Pomoc: \r\n"
-                    + "Sterowanie: WASD; \r\n"
-                    + "Zmiana widoku kamery: C \r\n"
-                    + "Pauza: P \r\n"
-                    + "Większy kąt prawo/lewo: , \r\n"
-                    + "Większy kąt góra/dół: . \r\n"
-                    + "Większy kąt w wszystkie kierunki: Shift \r\n");
+                + "Sterowanie: WASD; \r\n"
+                + "Zmiana widoku kamery: C \r\n"
+                + "Pauza: P \r\n"
+                + "Większy kąt prawo/lewo: , \r\n"
+                + "Większy kąt góra/dół: . \r\n"
+                + "Większy kąt w wszystkie kierunki: Shift \r\n");
         };
     };
 
@@ -251,7 +250,7 @@ function initInin() {
 function addControlGui(controlObject) {
     var gui = new dat.GUI();
     gui.add(controlObject, 'newGame');
-    gui.add(controlObject, 'delay', 0, 500);
+    gui.add(controlObject, 'delay', 0.1, 2.0, 0.1);
     gui.add(controlObject, 'withdrwalBack', 0, 100);
     gui.add(controlObject, 'withdrwalUp', 0, 100);
     gui.add(controlObject, 'godMode');
@@ -264,9 +263,9 @@ function addControlGui(controlObject) {
 
 function updatePoints() {
     var text2 = document.getElementById("points");
-    
-    
-    if(text2 === null || text2.length <= 0) {
+
+
+    if (text2 === null || text2.length <= 0) {
         text2 = document.createElement('div');
         text2.setAttribute("id", "points");
         text2.style.position = 'absolute';
@@ -276,22 +275,22 @@ function updatePoints() {
         text2.style.weight = "bold";
         text2.style.top = 0 + 'px';
         text2.style.left = 100 + 'px';
-        text2.style.fontSize  = 20 + 'px';
-    
+        text2.style.fontSize = 20 + 'px';
+
         document.body.appendChild(text2);
     }
-    
+
     text2.innerHTML = "Punkty: " + point
-                        + "<br />Ogon: " + tails.length;
+        + "<br />Ogon: " + tails.length;
 }
 
 
 function updateCenterText(text) {
-    
+
     var text2 = document.getElementById("gameInfo");
-    
-    
-    if(text2 === null || text2.length <= 0) {
+
+
+    if (text2 === null || text2.length <= 0) {
         text2 = document.createElement('div');
         text2.setAttribute("id", "gameInfo");
         text2.style.position = 'absolute';
@@ -301,11 +300,11 @@ function updateCenterText(text) {
         text2.style.weight = "bold";
         text2.style.top = 200 + 'px';
         text2.style.left = 200 + 'px';
-        text2.style.fontSize  = 60 + 'px';
-    
+        text2.style.fontSize = 60 + 'px';
+
         document.body.appendChild(text2);
     }
-    
+
     text2.innerHTML = text;
 }
 
@@ -326,55 +325,46 @@ function addStatsObject() {
  * for future renders
  */
 function render() {
-
+    var accelerate = control.delay;
     ////////////////////Sterowanie//////////////////////////////
-    if (direction.left)
-    {
-        if (direction.accRightLeft && jumps > INITIAL_JUMPS)
-        {
-            rotLeftRight += Math.PI / 6;
+    if (direction.left) {
+        if (direction.accRightLeft && jumps > INITIAL_JUMPS) {
+            rotLeftRight += 0.2 * accelerate;
         }
-        else
-        {
-            rotLeftRight += 0.1;
+        else {
+            rotLeftRight += 0.1 * accelerate;
         }
+        console.log("render1 - ", rotLeftRight, " - ", " - ", accelerate);
     }
-    else if (direction.right)
-    {
-        if (direction.accRightLeft && jumps > INITIAL_JUMPS)
-        {
-            rotLeftRight -= Math.PI / 6;
+    else if (direction.right) {
+        if (direction.accRightLeft && jumps > INITIAL_JUMPS) {
+            rotLeftRight -= 0.2 * accelerate;
         }
-        else
-        {
-            rotLeftRight -= 0.1;
+        else {
+            rotLeftRight -= 0.1 * accelerate;
         }
+        console.log("render2 - ", rotLeftRight, " - ", " - ", accelerate);
     }
-    if (direction.up)
-    {
-        if (direction.accUpDown && jumps > INITIAL_JUMPS)
-        {
-            rotUpDown += Math.PI / 3;
+    if (direction.up) {
+        if (direction.accUpDown && jumps > INITIAL_JUMPS) {
+            rotUpDown += 0.8 * accelerate;
         }
-        else
-        {
-            rotUpDown += 0.5;
+        else {
+            rotUpDown += 0.5 * accelerate;
         }
+        console.log("render3 - ", rotUpDown, " - ", " - ", accelerate);
     }
-    else if (direction.down)
-    {
-        if (direction.accUpDown && jumps > INITIAL_JUMPS)
-        {
-            rotUpDown -= Math.PI / 3;
+    else if (direction.down) {
+        if (direction.accUpDown && jumps > INITIAL_JUMPS) {
+            rotUpDown -= 0.8 * accelerate;
         }
-        else
-        {
-            rotUpDown -= 0.5;
+        else {
+            rotUpDown -= 0.5 * accelerate;
         }
+        console.log("render4 - ", rotUpDown, " - ", " - ", accelerate);
     }
 
-    if (jumps <= INITIAL_JUMPS)
-    {
+    if (jumps <= INITIAL_JUMPS) {
         jumps += 1;
     }
 
@@ -389,40 +379,22 @@ function render() {
     //
     if (skipper >= SKIP_FRAME) {
         skipper = 0;
-        if (!pause && startGame && !endGame)
-        {
-            tails[0].canMove = true;
-
-            var previousLocation = tails[0].location;
-            moveSnake = tails[0].Move(rotLeftRight, rotUpDown);
+        if (!pause && startGame && !endGame) {
+            moveSnake = tails[0].MoveForward(rotLeftRight, rotUpDown, accelerate);
             var head = scene.getObjectByName(tails[0].getName());
+            head.lookAt(tails[0].location);
             head.position.copy(tails[0].location);
-            head.rotation.y = rotLeftRight;
-            
+
             //for (var i = tails.length - 1; i >= 1; i -= 1)
-            for (var i = 1; i < tails.length; i += 1)
-            {
-                if (!tails[i].canMove) {
-                    var distance = tails[i].Distance(tails[i - 1].location);
-                    if (distance > 2.0 * RADIUS_SNAKE)
-                    {
-                        tails[i].canMove = true;
-                    }
-                }
-
-                if (tails[i - 1].canMove)
-                {
-                    tails[i].PushLocationAndRotation(tails[i - 1].location, tails[i - 1].angleRightLeft, tails[i - 1].angleUpDown);
-
-                    //tails[i].Move(tails[i - 1].angleRightLeft, tails[i - 1].angleUpDown);
-                    if (tails[i].canMove)
-                    {
-                        tails[i].PopLocationAndRotation();
-                    }
+            for (var i = 1; i < tails.length; i += 1) {
+                if (tails[i].CanMove(tails[i - 1])) {
+                    tails[i].FollowPoint(tails[i - 1]);
                 }
                 var t = scene.getObjectByName(tails[i].getName());
                 t.position.copy(tails[i].location);
-                t.rotation.y = tails[i].angleRightLeft;
+                if (tails[i].CanRotate(tails[i - 1])) {
+                    t.lookAt(tails[i - 1].location);
+                }
             }
 
             rotUpDown = 0.0;
@@ -437,20 +409,18 @@ function render() {
     var bite = false;
     var wall = false;
     //sprawdzanie ugryzienia siebie
-    if (!control.godMode)
-    {
+    if (!control.godMode) {
+        var headRadius = tails[0].tailRadius;
         var l1 = tails[0].DistanceX(SIZE_CUBE / 2.0);
         var l2 = tails[0].DistanceX(-SIZE_CUBE / 2.0);
         var l3 = tails[0].DistanceY(SIZE_CUBE / 2.0);
         var l4 = tails[0].DistanceY(-SIZE_CUBE / 2.0);
         var l5 = tails[0].DistanceZ(SIZE_CUBE / 2.0);
         var l6 = tails[0].DistanceZ(-SIZE_CUBE / 2.0);
-        
-        wall = l1 <= RADIUS_SNAKE || l2 <= RADIUS_SNAKE || l3 <= RADIUS_SNAKE || l4 <= RADIUS_SNAKE || l5 <= RADIUS_SNAKE || l6 <= RADIUS_SNAKE;
-        for (var i = tails.length - 1; i >= 3; i -= 1)
-        {
-            if (tails[1].canMove && tails[i].Distance(tails[0].location) < 2.0 * RADIUS_SNAKE)
-            {
+
+        wall = l1 <= headRadius || l2 <= headRadius || l3 <= headRadius || l4 <= headRadius || l5 <= headRadius || l6 <= headRadius;
+        for (var i = tails.length - 1; i >= 3; i -= 1) {
+            if (tails[1].CanMove(tails[0]) && tails[i].Distance(tails[0].location) < headRadius + tails[i].tailRadius) {
                 bite = true;
                 break;
             }
@@ -458,15 +428,13 @@ function render() {
     }
 
 
-    if (bite || wall)
-    {
+    if (bite || wall) {
         endGame = true;
         refreshText = true;
         updateCenterText("Koniec gry!");
     }
     //sprawdzenie zdjedzenia pożywienia
-    if (apple.Distance(tails[0].location) < 2.0 * RADIUS_SNAKE)
-    {
+    if (apple.Distance(tails[0].location) < apple.tailRadius + tails[0].tailRadius) {
         point += 1;
         randAppleLocation();
         createTail();
@@ -479,8 +447,7 @@ function render() {
     //Vector3 vArrow = new Vector3();
     //ustawienie kamery
 
-    if (view === 0 || view > 1)
-    {
+    if (view === 0 || view > 1) {
         view = 0;
         vEye.x = tails[0].location.x - control.withdrwalBack * moveSnake.x;
         vEye.z = tails[0].location.z - control.withdrwalBack * moveSnake.z;
@@ -490,8 +457,7 @@ function render() {
         vArrow.y = tails[0].location.y + 6;
         vArrow.z = tails[0].location.z + 5 * moveSnake.z;
     }
-    else if (view === 1)
-    {
+    else if (view === 1) {
         vEye.x = tails[0].location.x;
         vEye.z = tails[0].location.z;
         vEye.y = tails[0].location.y;
@@ -500,26 +466,25 @@ function render() {
         vArrow.y = tails[0].location.y + 2;
         vArrow.z = tails[0].location.z + 15 * moveSnake.z;
     }
-    
-    
+
+
     vTarget.x = tails[0].location.x + 20 * moveSnake.x;
     vTarget.y = tails[0].location.y;
     vTarget.z = tails[0].location.z + 20 * moveSnake.z;
 
 
     var objArrow = scene.getObjectById(arrow.id);
-    if (control.showHint)
-    {
+    if (control.showHint) {
         arrow.position.x = vArrow.x;
         arrow.position.y = vArrow.y;
         arrow.position.z = vArrow.z;
 
         arrow.lookAt(apple.location);
-        
-        if(objArrow !== arrow) {
+
+        if (objArrow !== arrow) {
             scene.add(arrow);
         }
-    } else if(objArrow === arrow) {
+    } else if (objArrow === arrow) {
         scene.remove(arrow);
     }
 
@@ -536,11 +501,11 @@ function render() {
     camera.up = vUp;
     camera.lookAt(vTarget);
 
-                
+
     var s = scene.getObjectByName(SPOT_LIGHT_NAME);
     s.position.copy(tails[0].location);
     s.target.position.copy(vTarget);
-            
+
     var d = scene.getObjectByName(DIRECTIONAL_LIGHT_NAME);
     d.position.copy(tails[0].location);
     d.target.position.copy(vTarget);
@@ -548,36 +513,28 @@ function render() {
 
     // update stats
     stats.update();
-    
+
     // and render the scene
     //renderer.render(scene, camera);
     renderer.autoClear = false;
     composer.render();
 
-//    requestAnimationFrame(render);
+    //    requestAnimationFrame(render);
     // render using requestAnimationFrame
-    if(control.delay === 0) {
-        requestAnimationFrame(render);
-    } else {
-        setTimeout(function() { requestAnimationFrame(render); }, control.delay);
-    }
+    requestAnimationFrame(render);
 }
 
-function randAppleLocation()
-{
+function randAppleLocation() {
     var v = new THREE.Vector3();
 
     var ok = true;
-    do
-    {
+    do {
         ok = true;
-        v.x = randomIntFromInterval((-SIZE_CUBE / 2.0 + RADIUS_SNAKE), (SIZE_CUBE / 2.0 - RADIUS_SNAKE));
-        v.y = randomIntFromInterval((-SIZE_CUBE / 2.0 + RADIUS_SNAKE), (SIZE_CUBE / 2.0 - RADIUS_SNAKE));
-        v.z = randomIntFromInterval((-SIZE_CUBE / 2.0 + RADIUS_SNAKE), (SIZE_CUBE / 2.0 - RADIUS_SNAKE));
-        for (var i = tails.length - 1; i >= 4; i -= 1)
-        {
-            if (tails[i].Distance(v) < 2.0 * RADIUS_SNAKE)
-            {
+        v.x = randomIntFromInterval((-SIZE_CUBE / 2.0 + apple.tailRadius), (SIZE_CUBE / 2.0 - apple.tailRadius));
+        v.y = randomIntFromInterval((-SIZE_CUBE / 2.0 + apple.tailRadius), (SIZE_CUBE / 2.0 - apple.tailRadius));
+        v.z = randomIntFromInterval((-SIZE_CUBE / 2.0 + apple.tailRadius), (SIZE_CUBE / 2.0 - apple.tailRadius));
+        for (var i = tails.length - 1; i >= 4; i -= 1) {
+            if (tails[i].Distance(v) < tails[i].tailRadius + v.tailRadius) {
                 ok = false;
                 break;
             }
@@ -588,31 +545,26 @@ function randAppleLocation()
     var name = apple.getName();
     var appleMesh = scene.getObjectByName(name);
     appleMesh.position.copy(v);
-    
+
     arrow.lookAt(apple.location);
 }
 
-function randomIntFromInterval(min, max)
-{
+function randomIntFromInterval(min, max) {
     return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
-function AbsPi(radians)
-{
-    if (radians > Math.PI * 2)
-    {
+function AbsPi(radians) {
+    if (radians > Math.PI * 2) {
         return radians - Math.PI * 2;
     }
-    else if (rotLeftRight < 0.0)
-    {
+    else if (radians < 0.0) {
         return Math.PI * 2 + radians;
     }
     return radians;
 }
 
 
-function newGame()
-{
+function newGame() {
     rotLeftRight = 0.0;
     rotUpDown = 0.0;
     jumps = 0;
@@ -625,8 +577,7 @@ function newGame()
         tails.splice(i, 1);
     }
 
-    for (var i = 0; i < START_TAILS_SNAKE; i += 1)
-    {
+    for (var i = 0; i < START_TAILS_SNAKE; i += 1) {
         createTail();
     }
 
@@ -648,7 +599,7 @@ function createTail() {
     if (tails.length > 0)
         vector = tails[i - 1].location;
 
-    var tail = new Tail(TAIL_NAME + i, vector);
+    var tail = new Tail(TAIL_NAME + i, RADIUS_SNAKE, vector);
     tails.push(tail);
 
     // create a cube
@@ -731,13 +682,13 @@ function keyUp(event) {
     }
     else if (event.keyCode === 80) {
         pause = !pause;
-        
-        if(pause) {
+
+        if (pause) {
             updateCenterText("PAUZA");
         } else {
             updateCenterText("");
         }
-        
+
         console.log("p");
     }
     else if (event.keyCode === 188) {
@@ -761,13 +712,13 @@ function keyUp(event) {
 
 function initBrowser() {
     initInin();
-    
+
     //arrow.rotation.x = 90 * Math.PI / 180;
     //arrow.lookAt(new THREE.Vector3(apple.location.x, apple.location.y, apple.location.z));
     // call the render function, after the first render, interval is determined
     // by requestAnimationFrame
     render();
-    
+
     // calls the handleResize function when the window is resized
     window.addEventListener('resize', handleResize, false);
     // 

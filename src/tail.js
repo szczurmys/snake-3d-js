@@ -1,53 +1,43 @@
 import * as THREE from 'three';
 
-function LocationAndRotation(location, angleRightLeft, angleUpDown) {
+export default function Tail(nameObj, tailRadius, vector) {
     'use strict';
-    this.location = location;
-    this.angleRightLeft = angleRightLeft;
-    this.angleUpDown = angleUpDown;
-}
-
-export default function Tail(nameObj, vector) {
-    'use strict';
-    var name = nameObj;
-    var lar = [];
-    
+    var name = nameObj;    
     this.location = typeof vector !== 'undefined'
-        ? new THREE.Vector3(vector.x, vector.y, vector.z)
+        ? vector.clone()
         : new THREE.Vector3();
-    this.angleRightLeft = 0.0;
-    this.angleUpDown = 0.0;
+    this.tailRadius = tailRadius;
 
-    this.canMove = false;
+    this.CanMove = function(previousTail) {
+        return this.CanRotate(previousTail) && this.Distance(previousTail.location) >= (this.tailRadius + previousTail.tailRadius);
+    };
 
+    this.CanRotate = function(previousTail) {
+        return previousTail.location.x != this.location.x 
+        || previousTail.location.y != this.location.y 
+        || previousTail.location.z != this.location.z;
+    };
 
-    this.Move = function (angleRightLeft, angleUpDown) {
+    this.MoveForward = function (angleRightLeft, angleUpDown, accelerate = 1) {
         angleUpDown = typeof angleUpDown !== 'undefined' ? angleUpDown : 0.0;
-        this.angleRightLeft = angleRightLeft;
-        this.angleUpDown = angleUpDown;
 
-        var x = Math.sin(angleRightLeft) * Math.abs(Math.cos(angleUpDown));
-        var y = Math.sin(angleUpDown);
-        var z = Math.cos(angleRightLeft) * Math.abs(Math.cos(angleUpDown));
+        //console.log("MoveForward - " - angleRightLeft, " - ", angleUpDown , " - ", accelerate);
+
+        var x = Math.sin(angleRightLeft) * Math.abs(Math.cos(angleUpDown)) * accelerate;
+        var y = Math.sin(angleUpDown) * accelerate;
+        var z = Math.cos(angleRightLeft) * Math.abs(Math.cos(angleUpDown)) * accelerate;
 
         this.location.x += x;
         this.location.y += y;
         this.location.z += z;
 
-
         return new THREE.Vector3(x, y, z);
     };
-    this.PushLocationAndRotation = function (location, angleRightLeft, angleUpDown) {
-        angleUpDown = typeof angleUpDown !== 'undefined' ? angleUpDown : 0.0;
-        location = new THREE.Vector3(location.x, location.y, location.z);
-        lar.push(new LocationAndRotation(location, angleRightLeft, angleUpDown));
+
+    this.FollowPoint = function (previousTail) {
+        this.location.copy(getPointInBetweenByLength(previousTail.location, this.location, previousTail.tailRadius + this.tailRadius));
     };
-    this.PopLocationAndRotation = function () {
-        var temp = lar.shift();
-        this.location = temp.location;
-        this.angleRightLeft = temp.angleRightLeft;
-        this.angleUpDown = temp.angleUpDown;
-    };
+
     this.Distance = function (point) {
         return Math.sqrt((this.location.x - point.x) * (this.location.x - point.x) + (this.location.y - point.y) * (this.location.y - point.y) + (this.location.z - point.z) * (this.location.z - point.z));
     };
@@ -64,5 +54,10 @@ export default function Tail(nameObj, vector) {
     this.getName = function () {
         return name;
     };
+
+    function getPointInBetweenByLength(start, end, length) {
+        var dir = end.clone().sub(start).normalize().multiplyScalar(length);
+        return start.clone().add(dir);
+    }
 }
 
