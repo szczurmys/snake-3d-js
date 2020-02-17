@@ -334,7 +334,6 @@ function render() {
         else {
             rotLeftRight += 0.1 * accelerate;
         }
-        console.log("render1 - ", rotLeftRight, " - ", " - ", accelerate);
     }
     else if (direction.right) {
         if (direction.accRightLeft && jumps > INITIAL_JUMPS) {
@@ -343,7 +342,6 @@ function render() {
         else {
             rotLeftRight -= 0.1 * accelerate;
         }
-        console.log("render2 - ", rotLeftRight, " - ", " - ", accelerate);
     }
     if (direction.up) {
         if (direction.accUpDown && jumps > INITIAL_JUMPS) {
@@ -352,7 +350,6 @@ function render() {
         else {
             rotUpDown += 0.5 * accelerate;
         }
-        console.log("render3 - ", rotUpDown, " - ", " - ", accelerate);
     }
     else if (direction.down) {
         if (direction.accUpDown && jumps > INITIAL_JUMPS) {
@@ -361,7 +358,6 @@ function render() {
         else {
             rotUpDown -= 0.5 * accelerate;
         }
-        console.log("render4 - ", rotUpDown, " - ", " - ", accelerate);
     }
 
     if (jumps <= INITIAL_JUMPS) {
