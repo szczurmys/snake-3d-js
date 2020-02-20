@@ -41,7 +41,7 @@ var jumps = 0;
 var tails = [];
 var apple = new Tail(APPLE_NAME, RADIUS_SNAKE);
 
-var moveSnake = new THREE.Vector3(0, 0, 1);
+var directionVector = new THREE.Vector3(0, 0, 1);
 var vEye = new THREE.Vector3();
 var vTarget = new THREE.Vector3();
 var vUp = new THREE.Vector3(0.0, 1.0, 0.0);
@@ -168,9 +168,9 @@ function initInin() {
     // setup the control object for the control gui
     control = new function () {
         this.newGame = newGame;
-        this.delay = 1;
-        this.withdrwalBack = 17;
-        this.withdrwalUp = 10;
+        this.speed = 0.9;
+        this.withdrwalBack = 27;
+        this.withdrwalUp = 13;
         this.godMode = false;
         this.showHint = true;
         this.addTenTail = function () {
@@ -197,13 +197,13 @@ function initInin() {
             return;
         };
         this.help = function () {
-            window.alert("Pomoc: \r\n"
-                + "Sterowanie: WASD; \r\n"
-                + "Zmiana widoku kamery: C \r\n"
-                + "Pauza: P \r\n"
-                + "Większy kąt prawo/lewo: , \r\n"
-                + "Większy kąt góra/dół: . \r\n"
-                + "Większy kąt w wszystkie kierunki: Shift \r\n");
+            window.alert("Help: \r\n"
+                + "Control: WASD; \r\n"
+                + "Change camera view: C \r\n"
+                + "Pause: P \r\n"
+                + "Bigger right/left angles: , \r\n"
+                + "Bigger up/down angles: . \r\n"
+                + "Bigger whole angles: Shift \r\n");
         };
     };
 
@@ -250,7 +250,7 @@ function initInin() {
 function addControlGui(controlObject) {
     var gui = new dat.GUI();
     gui.add(controlObject, 'newGame');
-    gui.add(controlObject, 'delay', 0.1, 2.0, 0.1);
+    gui.add(controlObject, 'speed', 0.1, 2.0, 0.1);
     gui.add(controlObject, 'withdrwalBack', 0, 100);
     gui.add(controlObject, 'withdrwalUp', 0, 100);
     gui.add(controlObject, 'godMode');
@@ -280,8 +280,8 @@ function updatePoints() {
         document.body.appendChild(text2);
     }
 
-    text2.innerHTML = "Punkty: " + point
-        + "<br />Ogon: " + tails.length;
+    text2.innerHTML = "Points: " + point
+        + "<br />Length: " + tails.length;
 }
 
 
@@ -325,11 +325,11 @@ function addStatsObject() {
  * for future renders
  */
 function render() {
-    var accelerate = control.delay;
+    var accelerate = control.speed;
     ////////////////////Sterowanie//////////////////////////////
     if (direction.left) {
         if (direction.accRightLeft && jumps > INITIAL_JUMPS) {
-            rotLeftRight += 0.2 * accelerate;
+            rotLeftRight += 0.5 * accelerate;
         }
         else {
             rotLeftRight += 0.1 * accelerate;
@@ -337,7 +337,7 @@ function render() {
     }
     else if (direction.right) {
         if (direction.accRightLeft && jumps > INITIAL_JUMPS) {
-            rotLeftRight -= 0.2 * accelerate;
+            rotLeftRight -= 0.5 * accelerate;
         }
         else {
             rotLeftRight -= 0.1 * accelerate;
@@ -345,7 +345,7 @@ function render() {
     }
     if (direction.up) {
         if (direction.accUpDown && jumps > INITIAL_JUMPS) {
-            rotUpDown += 0.8 * accelerate;
+            rotUpDown += 0.9 * accelerate;
         }
         else {
             rotUpDown += 0.5 * accelerate;
@@ -353,7 +353,7 @@ function render() {
     }
     else if (direction.down) {
         if (direction.accUpDown && jumps > INITIAL_JUMPS) {
-            rotUpDown -= 0.8 * accelerate;
+            rotUpDown -= 0.9 * accelerate;
         }
         else {
             rotUpDown -= 0.5 * accelerate;
@@ -376,16 +376,15 @@ function render() {
     if (skipper >= SKIP_FRAME) {
         skipper = 0;
         if (!pause && startGame && !endGame) {
-            moveSnake = tails[0].MoveForward(rotLeftRight, rotUpDown, accelerate);
+            directionVector = tails[0].CalculateMoveForward(rotLeftRight, rotUpDown);
+            tails[0].MoveForward(rotLeftRight, rotUpDown, accelerate);
             var head = scene.getObjectByName(tails[0].getName());
             head.lookAt(tails[0].location);
             head.position.copy(tails[0].location);
 
             //for (var i = tails.length - 1; i >= 1; i -= 1)
             for (var i = 1; i < tails.length; i += 1) {
-                if (tails[i].CanMove(tails[i - 1])) {
-                    tails[i].FollowPoint(tails[i - 1]);
-                }
+                tails[i].FollowPoint(tails[i - 1]);
                 var t = scene.getObjectByName(tails[i].getName());
                 t.position.copy(tails[i].location);
                 if (tails[i].CanRotate(tails[i - 1])) {
@@ -427,7 +426,7 @@ function render() {
     if (bite || wall) {
         endGame = true;
         refreshText = true;
-        updateCenterText("Koniec gry!");
+        updateCenterText("Game over!");
     }
     //sprawdzenie zdjedzenia pożywienia
     if (apple.Distance(tails[0].location) < apple.tailRadius + tails[0].tailRadius) {
@@ -445,28 +444,28 @@ function render() {
 
     if (view === 0 || view > 1) {
         view = 0;
-        vEye.x = tails[0].location.x - control.withdrwalBack * moveSnake.x;
-        vEye.z = tails[0].location.z - control.withdrwalBack * moveSnake.z;
+        vEye.x = tails[0].location.x - control.withdrwalBack * directionVector.x;
+        vEye.z = tails[0].location.z - control.withdrwalBack * directionVector.z;
         vEye.y = tails[0].location.y + control.withdrwalUp;
 
-        vArrow.x = tails[0].location.x + 5 * moveSnake.x;
+        vArrow.x = tails[0].location.x + 5 * directionVector.x;
         vArrow.y = tails[0].location.y + 6;
-        vArrow.z = tails[0].location.z + 5 * moveSnake.z;
+        vArrow.z = tails[0].location.z + 5 * directionVector.z;
     }
     else if (view === 1) {
         vEye.x = tails[0].location.x;
         vEye.z = tails[0].location.z;
         vEye.y = tails[0].location.y;
 
-        vArrow.x = tails[0].location.x + 15 * moveSnake.x;
+        vArrow.x = tails[0].location.x + 15 * directionVector.x;
         vArrow.y = tails[0].location.y + 2;
-        vArrow.z = tails[0].location.z + 15 * moveSnake.z;
+        vArrow.z = tails[0].location.z + 15 * directionVector.z;
     }
 
 
-    vTarget.x = tails[0].location.x + 20 * moveSnake.x;
+    vTarget.x = tails[0].location.x + 20 * directionVector.x;
     vTarget.y = tails[0].location.y;
-    vTarget.z = tails[0].location.z + 20 * moveSnake.z;
+    vTarget.z = tails[0].location.z + 20 * directionVector.z;
 
 
     var objArrow = scene.getObjectById(arrow.id);
@@ -580,7 +579,7 @@ function newGame() {
 
     randAppleLocation();
 
-    moveSnake = new THREE.Vector3(0, 0, 1);
+    directionVector = new THREE.Vector3(0, 0, 1);
     startGame = true;
     endGame = false;
     pause = false;
