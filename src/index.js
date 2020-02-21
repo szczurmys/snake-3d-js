@@ -171,7 +171,7 @@ function initInin() {
         this.newGame = newGame;
         this.delay = 20;
         this.withdrwalBack = 17;
-        this.withdrwalUp = 10;
+        this.withdrwalUp = 11;
         this.godMode = false;
         this.showHint = true;
         this.addTenTail = function () {
