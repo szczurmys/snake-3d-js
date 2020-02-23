@@ -2,44 +2,39 @@ import { Vector3 } from 'three';
 
 export default class Tail {
     public location: Vector3;
-    public angleRightLeft: number = 0.0;
-    public angleUpDown: number = 0.0;
-    public canMove: boolean = false;
+
 
     private lar: {location: Vector3, angleRightLeft: number, angleUpDown: number}[] = [];
 
-    public constructor(public readonly name: string, vector?: Vector3) {
+    public constructor(public readonly name: string, public readonly tailRadius: number, vector?: Vector3) {
         this.location = vector && vector.clone() || new Vector3();
     }
 
-    public move(angleRightLeft: number, angleUpDown: number): Vector3 {
-        angleUpDown = typeof angleUpDown !== 'undefined' ? angleUpDown : 0.0;
-        this.angleRightLeft = angleRightLeft;
-        this.angleUpDown = angleUpDown;
+    public canMove(previousTail) {
+        return this.canRotate(previousTail) && this.distance(previousTail.location) >= (this.tailRadius + previousTail.tailRadius);
+    };
 
-        const x = Math.sin(angleRightLeft) * Math.abs(Math.cos(angleUpDown));
-        const y = Math.sin(angleUpDown);
-        const z = Math.cos(angleRightLeft) * Math.abs(Math.cos(angleUpDown));
+    public canRotate(previousTail: Tail) {
+        return !previousTail.location.equals(this.location);
+    };
+
+    public moveForward(angleRightLeft: number, angleUpDown: number, accelerate: number = 1) {
+        angleUpDown = typeof angleUpDown !== 'undefined' ? angleUpDown : 0.0;
+
+        const x = Math.sin(angleRightLeft) * Math.abs(Math.cos(angleUpDown)) * accelerate;
+        const y = Math.sin(angleUpDown) * accelerate;
+        const z = Math.cos(angleRightLeft) * Math.abs(Math.cos(angleUpDown)) * accelerate;
 
         this.location.x += x;
         this.location.y += y;
         this.location.z += z;
 
         return new Vector3(x, y, z);
-    }
+    };
 
-    public pushLocationAndRotation(location: Vector3, angleRightLeft: number, angleUpDown: number): void {
-        angleUpDown = typeof angleUpDown !== 'undefined' ? angleUpDown : 0.0;
-        location = new Vector3(location.x, location.y, location.z);
-        this.lar.push({location, angleRightLeft, angleUpDown});
-    }
-
-    public popLocationAndRotation(): void {
-        const temp = this.lar.shift();
-        this.location = temp.location;
-        this.angleRightLeft = temp.angleRightLeft;
-        this.angleUpDown = temp.angleUpDown;
-    }
+    public followPoint(previousTail: Tail) {
+        this.location.copy(this.getPointInBetweenByLength(previousTail.location, this.location, previousTail.tailRadius + this.tailRadius));
+    };
 
     public distance(point: Vector3): number {
         return this.location.distanceTo(point);
@@ -59,5 +54,10 @@ export default class Tail {
 
     public getName(): string {
         return this.name;
+    }
+
+    private getPointInBetweenByLength(start: Vector3, end: Vector3, length: number) {
+        const dir = end.clone().sub(start).normalize().multiplyScalar(length);
+        return start.clone().add(dir);
     }
 }

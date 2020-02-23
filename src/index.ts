@@ -51,7 +51,7 @@ let stats: Stats;
 let view: number = 0;
 
 const tails: Tail[] = [];
-const apple: Tail = new Tail(APPLE_NAME);
+const apple: Tail = new Tail(APPLE_NAME, RADIUS_SNAKE);
 
 const moveSnake: Vector3 = new Vector3(0, 0, 1);
 const vEye: Vector3 = new Vector3();
@@ -87,7 +87,7 @@ let refreshText: boolean = true;
  */
 function initInin() {
     for (let i = 0; i < START_TAILS_SNAKE; i += 1) {
-        tails.push(new Tail(TAIL_NAME + i));
+        tails.push(new Tail(TAIL_NAME + i, RADIUS_SNAKE));
     }
 
 
@@ -126,7 +126,7 @@ function initInin() {
 
 
     // create a cube
-    const appleGeometry = new SphereGeometry(RADIUS_SNAKE, SPHERE_FRAGMENT, SPHERE_FRAGMENT);
+    const appleGeometry = new SphereGeometry(apple.tailRadius, SPHERE_FRAGMENT, SPHERE_FRAGMENT);
 
     const appleMesh = new Mesh(appleGeometry, materials.appleMaterial);
     appleMesh.name = apple.getName();
@@ -174,7 +174,7 @@ function initInin() {
     // setup the control object for the control gui
     control = {
         newGame,
-        delay: 20,
+        delay: 1,
         withdrawalBack: 16,
         withdrawalUp: 11,
         godMode: false,
@@ -254,7 +254,7 @@ function initInin() {
 function addControlGui(controlObject) {
     const gui = new dat.GUI();
     gui.add(controlObject, 'newGame');
-    gui.add(controlObject, 'delay', 0, 500);
+    gui.add(controlObject, 'delay', 0.1, 2.0, 0.1);
     gui.add(controlObject, 'withdrwalBack', 0, 100);
     gui.add(controlObject, 'withdrwalUp', 0, 100);
     gui.add(controlObject, 'godMode');
@@ -323,38 +323,38 @@ function addStatsObject() {
  * for future renders
  */
 function render() {
-
+    const accelerate = control.delay;
     // //////////////////Sterowanie//////////////////////////////
     if (direction.left) {
         if (direction.accRightLeft && jumps > INITIAL_JUMPS) {
-            rotLeftRight += Math.PI / 6;
+            rotLeftRight += 0.2 * accelerate;
         }
         else {
-            rotLeftRight += 0.1;
+            rotLeftRight += 0.1 * accelerate;
         }
     }
     else if (direction.right) {
         if (direction.accRightLeft && jumps > INITIAL_JUMPS) {
-            rotLeftRight -= Math.PI / 6;
+            rotLeftRight -= 0.2 * accelerate;
         }
         else {
-            rotLeftRight -= 0.1;
+            rotLeftRight -= 0.1 * accelerate;
         }
     }
     if (direction.up) {
         if (direction.accUpDown && jumps > INITIAL_JUMPS) {
-            rotUpDown += Math.PI / 3;
+            rotUpDown += 0.8 * accelerate;
         }
         else {
-            rotUpDown += 0.5;
+            rotUpDown += 0.5 * accelerate;
         }
     }
     else if (direction.down) {
         if (direction.accUpDown && jumps > INITIAL_JUMPS) {
-            rotUpDown -= Math.PI / 3;
+            rotUpDown -= 0.8 * accelerate;
         }
         else {
-            rotUpDown -= 0.5;
+            rotUpDown -= 0.5 * accelerate;
         }
     }
 
@@ -374,33 +374,20 @@ function render() {
     if (skipper >= SKIP_FRAME) {
         skipper = 0;
         if (!pause && startGame && !endGame) {
-            tails[0].canMove = true;
-
-            moveSnake.copy(tails[0].move(rotLeftRight, rotUpDown));
+            moveSnake.copy(tails[0].moveForward(rotLeftRight, rotUpDown, accelerate));
             const head = scene.getObjectByName(tails[0].getName());
+            head.lookAt(tails[0].location);
             head.position.copy(tails[0].location);
-            head.rotation.y = rotLeftRight;
 
-            // for (let i = tails.length - 1; i >= 1; i -= 1)
             for (let i = 1; i < tails.length; i += 1) {
-                if (!tails[i].canMove) {
-                    const distance = tails[i].distance(tails[i - 1].location);
-                    if (distance > 2.0 * RADIUS_SNAKE) {
-                        tails[i].canMove = true;
-                    }
-                }
-
-                if (tails[i - 1].canMove) {
-                    tails[i].pushLocationAndRotation(tails[i - 1].location, tails[i - 1].angleRightLeft, tails[i - 1].angleUpDown);
-
-                    // tails[i].Move(tails[i - 1].angleRightLeft, tails[i - 1].angleUpDown);
-                    if (tails[i].canMove) {
-                        tails[i].popLocationAndRotation();
-                    }
+                if (tails[i].canMove(tails[i - 1])) {
+                    tails[i].followPoint(tails[i - 1]);
                 }
                 const t = scene.getObjectByName(tails[i].getName());
                 t.position.copy(tails[i].location);
-                t.rotation.y = tails[i].angleRightLeft;
+                if (tails[i].canRotate(tails[i - 1])) {
+                    t.lookAt(tails[i - 1].location);
+                }
             }
 
             rotUpDown = 0.0;
@@ -416,6 +403,7 @@ function render() {
     let wall = false;
     // sprawdzanie ugryzienia siebie
     if (!control.godMode) {
+        const headRadius = tails[0].tailRadius;
         const l1 = tails[0].distanceX(SIZE_CUBE / 2.0);
         const l2 = tails[0].distanceX(-SIZE_CUBE / 2.0);
         const l3 = tails[0].distanceY(SIZE_CUBE / 2.0);
@@ -423,9 +411,9 @@ function render() {
         const l5 = tails[0].distanceZ(SIZE_CUBE / 2.0);
         const l6 = tails[0].distanceZ(-SIZE_CUBE / 2.0);
 
-        wall = l1 <= RADIUS_SNAKE || l2 <= RADIUS_SNAKE || l3 <= RADIUS_SNAKE || l4 <= RADIUS_SNAKE || l5 <= RADIUS_SNAKE || l6 <= RADIUS_SNAKE;
+        wall = l1 <= headRadius || l2 <= headRadius || l3 <= headRadius || l4 <= headRadius || l5 <= headRadius || l6 <= headRadius;
         for (let i = tails.length - 1; i >= 3; i -= 1) {
-            if (tails[1].canMove && tails[i].distance(tails[0].location) < 2.0 * RADIUS_SNAKE) {
+            if (tails[1].canMove(tails[0]) && tails[i].distance(tails[0].location) < headRadius + tails[i].tailRadius) {
                 bite = true;
                 break;
             }
@@ -439,7 +427,7 @@ function render() {
         updateCenterText("Koniec gry!");
     }
     // sprawdzenie zdjedzenia pożywienia
-    if (apple.distance(tails[0].location) < 2.0 * RADIUS_SNAKE) {
+    if (apple.distance(tails[0].location) < apple.tailRadius + tails[0].tailRadius) {
         point += 1;
         randAppleLocation();
         createTail();
@@ -539,11 +527,11 @@ function randAppleLocation() {
     let ok = true;
     do {
         ok = true;
-        v.x = randomIntFromInterval((-SIZE_CUBE / 2.0 + RADIUS_SNAKE), (SIZE_CUBE / 2.0 - RADIUS_SNAKE));
-        v.y = randomIntFromInterval((-SIZE_CUBE / 2.0 + RADIUS_SNAKE), (SIZE_CUBE / 2.0 - RADIUS_SNAKE));
-        v.z = randomIntFromInterval((-SIZE_CUBE / 2.0 + RADIUS_SNAKE), (SIZE_CUBE / 2.0 - RADIUS_SNAKE));
+        v.x = randomIntFromInterval((-SIZE_CUBE / 2.0 + apple.tailRadius), (SIZE_CUBE / 2.0 - apple.tailRadius));
+        v.y = randomIntFromInterval((-SIZE_CUBE / 2.0 + apple.tailRadius), (SIZE_CUBE / 2.0 - apple.tailRadius));
+        v.z = randomIntFromInterval((-SIZE_CUBE / 2.0 + apple.tailRadius), (SIZE_CUBE / 2.0 - apple.tailRadius));
         for (let i = tails.length - 1; i >= 4; i -= 1) {
-            if (tails[i].distance(v) < 2.0 * RADIUS_SNAKE) {
+            if (tails[i].distance(v) < tails[i].tailRadius + apple.tailRadius) {
                 ok = false;
                 break;
             }
@@ -566,7 +554,7 @@ function AbsPi(radians) {
     if (radians > Math.PI * 2) {
         return radians - Math.PI * 2;
     }
-    else if (rotLeftRight < 0.0) {
+    else if (radians < 0.0) {
         return Math.PI * 2 + radians;
     }
     return radians;
@@ -608,7 +596,7 @@ function createTail() {
     if (tails.length > 0)
         vector = tails[i - 1].location;
 
-        const tail = new Tail(TAIL_NAME + i, vector);
+        const tail = new Tail(TAIL_NAME + i, RADIUS_SNAKE, vector);
     tails.push(tail);
 
     // create a cube
