@@ -36,8 +36,8 @@ let camera: PerspectiveCamera;
 let control: {
     newGame: () => void,
     delay: number,
-    withdrwalBack: number,
-    withdrwalUp: number,
+    withdrawalBack: number,
+    withdrawalUp: number,
     godMode: boolean,
     showHint: boolean,
     addTenTail: () => void,
@@ -175,8 +175,8 @@ function initInin() {
     control = {
         newGame,
         delay: 20,
-        withdrwalBack: 16,
-        withdrwalUp: 11,
+        withdrawalBack: 16,
+        withdrawalUp: 11,
         godMode: false,
         showHint: true,
         addTenTail() {
@@ -454,9 +454,9 @@ function render() {
 
     if (view === 0 || view > 1) {
         view = 0;
-        vEye.x = tails[0].location.x - control.withdrwalBack * moveSnake.x;
-        vEye.z = tails[0].location.z - control.withdrwalBack * moveSnake.z;
-        vEye.y = tails[0].location.y + control.withdrwalUp;
+        vEye.x = tails[0].location.x - control.withdrawalBack * moveSnake.x;
+        vEye.z = tails[0].location.z - control.withdrawalBack * moveSnake.z;
+        vEye.y = tails[0].location.y + control.withdrawalUp;
 
         vArrow.x = tails[0].location.x + 5 * moveSnake.x;
         vArrow.y = tails[0].location.y + 6;
