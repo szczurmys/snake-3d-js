@@ -10,7 +10,7 @@ export default function arrow3DGeometry(
 
     bevel = (typeof bevel !== 'undefined') && bevel > 0 ? bevel : 0;
 
-    var extrudeSettings: ExtrudeGeometryOptions = {
+    const extrudeSettings: ExtrudeGeometryOptions = {
         depth: weight,
         bevelEnabled: bevel > 0,
         bevelSegments: bevel,
@@ -21,8 +21,8 @@ export default function arrow3DGeometry(
 
     const height: number = heightHead + heightShaft;
 
-    var actualX: number;
-    var actualY: number;
+    let actualX: number;
+    let actualY: number;
 
 
     const arrowPts: Vector2[] = [];
@@ -56,9 +56,9 @@ export default function arrow3DGeometry(
     arrowPts.push(new Vector2(actualX, actualY));
 
 
-
-    for (var i = 0; i < arrowPts.length; i++)
-        arrowPts[i].multiplyScalar(0.25);
+    for (const arrowPt of arrowPts) {
+        arrowPt.multiplyScalar(0.25);
+    }
 
     const shape: Shape = new Shape(arrowPts);
 

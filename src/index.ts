@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import { WebGLRenderer, Scene, PerspectiveCamera, OrthographicCamera, Mesh, Vector3, AmbientLight, BoxGeometry, SphereGeometry, MeshPhongMaterial, SpotLight, DirectionalLight, PlaneGeometry } from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
@@ -22,7 +22,7 @@ const DIRECTIONAL_LIGHT_NAME: string = "directionalLight";
 const SPHERE_FRAGMENT: number = 40;
 
 const SKIP_FRAME: number = 0;
-var skipper: number = 0;
+let skipper: number = 0;
 
 const SIZE_CUBE: number = 200.0;
 const RADIUS_SNAKE: number = 2.0;
@@ -30,70 +30,80 @@ const START_TAILS_SNAKE: number = 3;
 const INITIAL_JUMPS: number = 5;
 
 // global variables
-var renderer: THREE.WebGLRenderer;
-var scene: THREE.Scene;
-var camera: THREE.PerspectiveCamera;
-var control;
-var stats: Stats;
+let renderer: WebGLRenderer;
+let scene: Scene;
+let camera: PerspectiveCamera;
+let control: {
+    newGame: () => void,
+    delay: number,
+    withdrwalBack: number,
+    withdrwalUp: number,
+    godMode: boolean,
+    showHint: boolean,
+    addTenTail: () => void,
+    addOneTail: () => void,
+    clearTail: () => void,
+    help: () => void
+};
+let stats: Stats;
 
 
-var view: number = 0;
-var jumps: number = 0;
+let view: number = 0;
 
-var tails: Tail[] = [];
-var apple: Tail = new Tail(APPLE_NAME);
+const tails: Tail[] = [];
+const apple: Tail = new Tail(APPLE_NAME);
 
-var moveSnake: THREE.Vector3 = new THREE.Vector3(0, 0, 1);
-var vEye: THREE.Vector3 = new THREE.Vector3();
-var vTarget: THREE.Vector3 = new THREE.Vector3();
-var vUp: THREE.Vector3 = new THREE.Vector3(0.0, 1.0, 0.0);
-var vArrow: THREE.Vector3 = new THREE.Vector3(0.0, 0.0, 0.0);
+const moveSnake: Vector3 = new Vector3(0, 0, 1);
+const vEye: Vector3 = new Vector3();
+const vTarget: Vector3 = new Vector3();
+const vUp: Vector3 = new Vector3(0.0, 1.0, 0.0);
+const vArrow: Vector3 = new Vector3(0.0, 0.0, 0.0);
 
 
-var direction: SelectedDirection = new SelectedDirection();
+const direction: SelectedDirection = new SelectedDirection();
 
 
 
 // background stuff
-var cameraBG: THREE.OrthographicCamera;
-var sceneBG: THREE.Scene;
-var composer: EffectComposer;
-var arrow: THREE.Mesh;
+let cameraBG: OrthographicCamera;
+let sceneBG: Scene;
+let composer: EffectComposer;
+let arrow: Mesh;
 
 
 
-var rotLeftRight: number = 0.0;
-var rotUpDown: number = 0.0;
-var jumps: number = 0;
-var point: number = 0;
-var startGame: boolean = true;
-var endGame: boolean = false;
-var pause: boolean = false;
-var refreshText: boolean = true;
+let rotLeftRight: number = 0.0;
+let rotUpDown: number = 0.0;
+let jumps: number = 0;
+let point: number = 0;
+let startGame: boolean = true;
+let endGame: boolean = false;
+let pause: boolean = false;
+let refreshText: boolean = true;
 
 /**
  * Initializes the scene, camera and objects. Called when the window is
  * loaded by using window.onload (see below)
  */
 function initInin() {
-    for (var i = 0; i < START_TAILS_SNAKE; i += 1) {
+    for (let i = 0; i < START_TAILS_SNAKE; i += 1) {
         tails.push(new Tail(TAIL_NAME + i));
     }
 
 
     // create a scene, that will hold all our elements such as objects, cameras and lights.
-    scene = new THREE.Scene();
+    scene = new Scene();
 
     // create a camera, which defines where we're looking at.
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 
     // create a render, sets the background color and the size
-    renderer = new THREE.WebGLRenderer();
+    renderer = new WebGLRenderer();
     renderer.setClearColor(0x000000, 1.0);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
 
-    var materialsArea = [
+    const materialsArea = [
         materials.wallMaterial,
         materials.wallMaterial,
         materials.skyMaterial,
@@ -103,39 +113,37 @@ function initInin() {
     ];
 
     // now add some better lighting
-    var ambientLight = new THREE.AmbientLight(0xAAAAAA);
+    const ambientLight = new AmbientLight(0xAAAAAA);
     ambientLight.name = 'ambient';
     scene.add(ambientLight);
 
     // create a cube
-    var arenaGeometry = new THREE.BoxGeometry(SIZE_CUBE, SIZE_CUBE, SIZE_CUBE, 1, 1, 1);
-    var arena = new THREE.Mesh(arenaGeometry, materialsArea);
+    const arenaGeometry = new BoxGeometry(SIZE_CUBE, SIZE_CUBE, SIZE_CUBE, 1, 1, 1);
+    const arena = new Mesh(arenaGeometry, materialsArea);
     arena.name = 'arena';
     arena.receiveShadow = true;
     scene.add(arena);
 
 
     // create a cube
-    var appleGeometry = new THREE.SphereGeometry(RADIUS_SNAKE, SPHERE_FRAGMENT, SPHERE_FRAGMENT);
+    const appleGeometry = new SphereGeometry(RADIUS_SNAKE, SPHERE_FRAGMENT, SPHERE_FRAGMENT);
 
-    var appleMesh = new THREE.Mesh(appleGeometry, materials.appleMaterial);
+    const appleMesh = new Mesh(appleGeometry, materials.appleMaterial);
     appleMesh.name = apple.getName();
     appleMesh.castShadow = true;
 
     scene.add(appleMesh);
-    
-    var arrowGeometry = arrow3DGeometry(
-            10, 8,
-            3, 10,
-            0, 1
-            ); 
-    var arrowMaterial = new THREE.MeshPhongMaterial( { color: "green" } );
-    
-    arrow = new THREE.Mesh(arrowGeometry, arrowMaterial);
+
+    const arrowGeometry = arrow3DGeometry(
+        10, 8,
+        3, 10,
+        0, 1
+    );
+    const arrowMaterial = new MeshPhongMaterial({ color: "green" });
+
+    arrow = new Mesh(arrowGeometry, arrowMaterial);
     arrow.name = "arrow";
     scene.add(arrow);
-
-    
 
 
     // position and point the camera to the center of the scene
@@ -145,18 +153,17 @@ function initInin() {
     camera.lookAt(scene.position);
 
     // add spotlight for the shadows
-    var spotLight = new THREE.SpotLight(0x5B5B5B);
+    const spotLight = new SpotLight(0x5B5B5B);
     spotLight.position.set(10, 20, 20);
-    spotLight.shadow.camera.near = SIZE_CUBE/10;
-    spotLight.shadow.camera.far = SIZE_CUBE/4;
+    spotLight.shadow.camera.near = SIZE_CUBE / 10;
+    spotLight.shadow.camera.far = SIZE_CUBE / 4;
     spotLight.castShadow = true;
     spotLight.name = SPOT_LIGHT_NAME;
     scene.add(spotLight);
     scene.add(spotLight.target);
-    
-    
+
     // add sunlight (light
-    var directionalLight = new THREE.DirectionalLight(0xdddddd, 0.5);
+    const directionalLight = new DirectionalLight(0xdddddd, 0.5);
     directionalLight.position.set(200, 10, -50);
     directionalLight.name = DIRECTIONAL_LIGHT_NAME;
     scene.add(directionalLight);
@@ -165,45 +172,43 @@ function initInin() {
 
 
     // setup the control object for the control gui
-    control = new class {
-        public readonly newGame: Function = newGame;
-        public delay: number = 20;
-        public withdrwalBack: number = 17;
-        public withdrwalUp: number = 11;
-        public godMode: boolean = false;
-        public showHint: boolean = true;
-        public readonly addTenTail: Function = function () {
-            var i;
-            for (i = 0; i < 10; i += 1) {
+    control = {
+        newGame,
+        delay: 20,
+        withdrwalBack: 17,
+        withdrwalUp: 11,
+        godMode: false,
+        showHint: true,
+        addTenTail() {
+            for (let i = 0; i < 10; i += 1) {
                 createTail();
             }
             updatePoints();
-        };
-        public readonly addOneTail: Function = function () {
+        },
+        addOneTail() {
             createTail();
             updatePoints();
-        };
-        public readonly clearTail: Function = function () {
-            var i;
-            for (i = tails.length - 1; i >= START_TAILS_SNAKE; i  -= 1) {
-                var t = tails[i];
-                var name = t.getName();
-                var o = scene.getObjectByName(name);
+        },
+        clearTail() {
+            for (let i = tails.length - 1; i >= START_TAILS_SNAKE; i -= 1) {
+                const t = tails[i];
+                const name = t.getName();
+                const o = scene.getObjectByName(name);
                 scene.remove(o);
                 tails.splice(i, 1);
             }
             updatePoints();
             return;
-        };
-        public readonly help: Function = function () {
+        },
+        help() {
             window.alert("Pomoc: \r\n"
-                    + "Sterowanie: WASD; \r\n"
-                    + "Zmiana widoku kamery: C \r\n"
-                    + "Pauza: P \r\n"
-                    + "Większy kąt prawo/lewo: , \r\n"
-                    + "Większy kąt góra/dół: . \r\n"
-                    + "Większy kąt w wszystkie kierunki: Shift \r\n");
-        };
+                + "Sterowanie: WASD; \r\n"
+                + "Zmiana widoku kamery: C \r\n"
+                + "Pauza: P \r\n"
+                + "Większy kąt prawo/lewo: , \r\n"
+                + "Większy kąt góra/dół: . \r\n"
+                + "Większy kąt w wszystkie kierunki: Shift \r\n");
+        }
     };
 
     // add extras
@@ -211,23 +216,23 @@ function initInin() {
     addStatsObject();
 
     // add background using a camera
-    cameraBG = new THREE.OrthographicCamera(-window.innerWidth, window.innerWidth, window.innerHeight, -window.innerHeight, -10000, 10000);
+    cameraBG = new OrthographicCamera(-window.innerWidth, window.innerWidth, window.innerHeight, -window.innerHeight, -10000, 10000);
     cameraBG.position.z = 500;
-    sceneBG = new THREE.Scene();
+    sceneBG = new Scene();
 
-    var bgPlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), materials.backgroundMaterial);
+    const bgPlane = new Mesh(new PlaneGeometry(1, 1), materials.backgroundMaterial);
     bgPlane.position.z = -1000;
     bgPlane.scale.set(window.innerWidth * 2, window.innerHeight * 2, 1);
     sceneBG.add(bgPlane);
 
     // setup the composer steps
     // first render the background
-    var bgPass = new RenderPass(sceneBG, cameraBG);
+    const bgPass = new RenderPass(sceneBG, cameraBG);
     // next render the scene (rotating earth), without clearing the current output
-    var renderPass = new RenderPass(scene, camera);
+    const renderPass = new RenderPass(scene, camera);
     renderPass.clear = false;
     // finally copy the result to the screen
-    var effectCopy = new ShaderPass(CopyShader);
+    const effectCopy = new ShaderPass(CopyShader);
     effectCopy.renderToScreen = true;
 
     // add these passes to the composer
@@ -247,7 +252,7 @@ function initInin() {
 }
 
 function addControlGui(controlObject) {
-    var gui = new dat.GUI();
+    const gui = new dat.GUI();
     gui.add(controlObject, 'newGame');
     gui.add(controlObject, 'delay', 0, 500);
     gui.add(controlObject, 'withdrwalBack', 0, 100);
@@ -261,11 +266,10 @@ function addControlGui(controlObject) {
 }
 
 function updatePoints() {
-    var text2: HTMLDivElement = <HTMLDivElement>document.getElementById("points");
-    
-    
-    if(!text2 || text2.innerHTML.length <= 0) {
-        text2 = <HTMLDivElement>document.createElement('div');
+    let text2: HTMLDivElement = document.getElementById("points") as HTMLDivElement;
+
+    if (!text2 || text2.innerHTML.length <= 0) {
+        text2 = document.createElement('div') as HTMLDivElement;
         text2.setAttribute("id", "points");
         text2.style.position = 'absolute';
         text2.style.width = '100';
@@ -274,23 +278,20 @@ function updatePoints() {
         text2.style.fontWeight = "bold";
         text2.style.top = 0 + 'px';
         text2.style.left = 100 + 'px';
-        text2.style.fontSize  = 20 + 'px';
-    
+        text2.style.fontSize = 20 + 'px';
+
         document.body.appendChild(text2);
     }
-    
+
     text2.innerHTML = "Punkty: " + point
-                        + "<br />Ogon: " + tails.length;
+        + "<br />Ogon: " + tails.length;
 }
 
 
 function updateCenterText(text) {
-    
-    var text2: HTMLDivElement = <HTMLDivElement>document.getElementById("gameInfo");
-    
-    
-    if(!text2 || text2.innerHTML.length <= 0) {
-        text2 = <HTMLDivElement>document.createElement('div');
+    let text2: HTMLDivElement = document.getElementById("gameInfo") as HTMLDivElement;
+    if (!text2 || text2.innerHTML.length <= 0) {
+        text2 = document.createElement('div') as HTMLDivElement;
         text2.setAttribute("id", "gameInfo");
         text2.style.position = 'absolute';
         text2.style.width = '200';
@@ -299,11 +300,10 @@ function updateCenterText(text) {
         text2.style.fontWeight = "bold";
         text2.style.top = 200 + 'px';
         text2.style.left = 200 + 'px';
-        text2.style.fontSize  = 60 + 'px';
-    
+        text2.style.fontSize = 60 + 'px';
+
         document.body.appendChild(text2);
     }
-    
     text2.innerHTML = text;
 }
 
@@ -324,54 +324,41 @@ function addStatsObject() {
  */
 function render() {
 
-    ////////////////////Sterowanie//////////////////////////////
-    if (direction.left)
-    {
-        if (direction.accRightLeft && jumps > INITIAL_JUMPS)
-        {
+    // //////////////////Sterowanie//////////////////////////////
+    if (direction.left) {
+        if (direction.accRightLeft && jumps > INITIAL_JUMPS) {
             rotLeftRight += Math.PI / 6;
         }
-        else
-        {
+        else {
             rotLeftRight += 0.1;
         }
     }
-    else if (direction.right)
-    {
-        if (direction.accRightLeft && jumps > INITIAL_JUMPS)
-        {
+    else if (direction.right) {
+        if (direction.accRightLeft && jumps > INITIAL_JUMPS) {
             rotLeftRight -= Math.PI / 6;
         }
-        else
-        {
+        else {
             rotLeftRight -= 0.1;
         }
     }
-    if (direction.up)
-    {
-        if (direction.accUpDown && jumps > INITIAL_JUMPS)
-        {
+    if (direction.up) {
+        if (direction.accUpDown && jumps > INITIAL_JUMPS) {
             rotUpDown += Math.PI / 3;
         }
-        else
-        {
+        else {
             rotUpDown += 0.5;
         }
     }
-    else if (direction.down)
-    {
-        if (direction.accUpDown && jumps > INITIAL_JUMPS)
-        {
+    else if (direction.down) {
+        if (direction.accUpDown && jumps > INITIAL_JUMPS) {
             rotUpDown -= Math.PI / 3;
         }
-        else
-        {
+        else {
             rotUpDown -= 0.5;
         }
     }
 
-    if (jumps <= INITIAL_JUMPS)
-    {
+    if (jumps <= INITIAL_JUMPS) {
         jumps += 1;
     }
 
@@ -379,45 +366,39 @@ function render() {
     rotUpDown = AbsPi(rotUpDown);
 
 
-    /////////////////////OBLICZENIA/////////////////////////////
+    // ///////////////////OBLICZENIA/////////////////////////////
 
     //
     // ustawienie położenia węża
     //
     if (skipper >= SKIP_FRAME) {
         skipper = 0;
-        if (!pause && startGame && !endGame)
-        {
+        if (!pause && startGame && !endGame) {
             tails[0].canMove = true;
 
-            var previousLocation = tails[0].location;
-            moveSnake = tails[0].move(rotLeftRight, rotUpDown);
-            var head = scene.getObjectByName(tails[0].getName());
+            moveSnake.copy(tails[0].move(rotLeftRight, rotUpDown));
+            const head = scene.getObjectByName(tails[0].getName());
             head.position.copy(tails[0].location);
             head.rotation.y = rotLeftRight;
-            
-            //for (var i = tails.length - 1; i >= 1; i -= 1)
-            for (var i = 1; i < tails.length; i += 1)
-            {
+
+            // for (let i = tails.length - 1; i >= 1; i -= 1)
+            for (let i = 1; i < tails.length; i += 1) {
                 if (!tails[i].canMove) {
-                    var distance = tails[i].distance(tails[i - 1].location);
-                    if (distance > 2.0 * RADIUS_SNAKE)
-                    {
+                    const distance = tails[i].distance(tails[i - 1].location);
+                    if (distance > 2.0 * RADIUS_SNAKE) {
                         tails[i].canMove = true;
                     }
                 }
 
-                if (tails[i - 1].canMove)
-                {
+                if (tails[i - 1].canMove) {
                     tails[i].pushLocationAndRotation(tails[i - 1].location, tails[i - 1].angleRightLeft, tails[i - 1].angleUpDown);
 
-                    //tails[i].Move(tails[i - 1].angleRightLeft, tails[i - 1].angleUpDown);
-                    if (tails[i].canMove)
-                    {
+                    // tails[i].Move(tails[i - 1].angleRightLeft, tails[i - 1].angleUpDown);
+                    if (tails[i].canMove) {
                         tails[i].popLocationAndRotation();
                     }
                 }
-                var t = scene.getObjectByName(tails[i].getName());
+                const t = scene.getObjectByName(tails[i].getName());
                 t.position.copy(tails[i].location);
                 t.rotation.y = tails[i].angleRightLeft;
             }
@@ -429,25 +410,22 @@ function render() {
     skipper += 1;
 
 
-    //sprawdzanie uderzenia w sciane
+    // sprawdzanie uderzenia w sciane
 
-    var bite = false;
-    var wall = false;
-    //sprawdzanie ugryzienia siebie
-    if (!control.godMode)
-    {
-        var l1 = tails[0].distanceX(SIZE_CUBE / 2.0);
-        var l2 = tails[0].distanceX(-SIZE_CUBE / 2.0);
-        var l3 = tails[0].distanceY(SIZE_CUBE / 2.0);
-        var l4 = tails[0].distanceY(-SIZE_CUBE / 2.0);
-        var l5 = tails[0].distanceZ(SIZE_CUBE / 2.0);
-        var l6 = tails[0].distanceZ(-SIZE_CUBE / 2.0);
-        
+    let bite = false;
+    let wall = false;
+    // sprawdzanie ugryzienia siebie
+    if (!control.godMode) {
+        const l1 = tails[0].distanceX(SIZE_CUBE / 2.0);
+        const l2 = tails[0].distanceX(-SIZE_CUBE / 2.0);
+        const l3 = tails[0].distanceY(SIZE_CUBE / 2.0);
+        const l4 = tails[0].distanceY(-SIZE_CUBE / 2.0);
+        const l5 = tails[0].distanceZ(SIZE_CUBE / 2.0);
+        const l6 = tails[0].distanceZ(-SIZE_CUBE / 2.0);
+
         wall = l1 <= RADIUS_SNAKE || l2 <= RADIUS_SNAKE || l3 <= RADIUS_SNAKE || l4 <= RADIUS_SNAKE || l5 <= RADIUS_SNAKE || l6 <= RADIUS_SNAKE;
-        for (var i = tails.length - 1; i >= 3; i -= 1)
-        {
-            if (tails[1].canMove && tails[i].distance(tails[0].location) < 2.0 * RADIUS_SNAKE)
-            {
+        for (let i = tails.length - 1; i >= 3; i -= 1) {
+            if (tails[1].canMove && tails[i].distance(tails[0].location) < 2.0 * RADIUS_SNAKE) {
                 bite = true;
                 break;
             }
@@ -455,15 +433,13 @@ function render() {
     }
 
 
-    if (bite || wall)
-    {
+    if (bite || wall) {
         endGame = true;
         refreshText = true;
         updateCenterText("Koniec gry!");
     }
-    //sprawdzenie zdjedzenia pożywienia
-    if (apple.distance(tails[0].location) < 2.0 * RADIUS_SNAKE)
-    {
+    // sprawdzenie zdjedzenia pożywienia
+    if (apple.distance(tails[0].location) < 2.0 * RADIUS_SNAKE) {
         point += 1;
         randAppleLocation();
         createTail();
@@ -472,12 +448,11 @@ function render() {
 
 
 
-    //vEye = new Vector3(0, 0, 0);
-    //Vector3 vArrow = new Vector3();
-    //ustawienie kamery
+    // vEye = new Vector3(0, 0, 0);
+    // Vector3 vArrow = new Vector3();
+    // ustawienie kamery
 
-    if (view === 0 || view > 1)
-    {
+    if (view === 0 || view > 1) {
         view = 0;
         vEye.x = tails[0].location.x - control.withdrwalBack * moveSnake.x;
         vEye.z = tails[0].location.z - control.withdrwalBack * moveSnake.z;
@@ -487,8 +462,7 @@ function render() {
         vArrow.y = tails[0].location.y + 6;
         vArrow.z = tails[0].location.z + 5 * moveSnake.z;
     }
-    else if (view === 1)
-    {
+    else if (view === 1) {
         vEye.x = tails[0].location.x;
         vEye.z = tails[0].location.z;
         vEye.y = tails[0].location.y;
@@ -497,26 +471,25 @@ function render() {
         vArrow.y = tails[0].location.y + 2;
         vArrow.z = tails[0].location.z + 15 * moveSnake.z;
     }
-    
-    
+
+
     vTarget.x = tails[0].location.x + 20 * moveSnake.x;
     vTarget.y = tails[0].location.y;
     vTarget.z = tails[0].location.z + 20 * moveSnake.z;
 
 
-    var objArrow = scene.getObjectById(arrow.id);
-    if (control.showHint)
-    {
+    const objArrow = scene.getObjectById(arrow.id);
+    if (control.showHint) {
         arrow.position.x = vArrow.x;
         arrow.position.y = vArrow.y;
         arrow.position.z = vArrow.z;
 
         arrow.lookAt(apple.location);
-        
-        if(objArrow !== arrow) {
+
+        if (objArrow !== arrow) {
             scene.add(arrow);
         }
-    } else if(objArrow === arrow) {
+    } else if (objArrow === arrow) {
         scene.remove(arrow);
     }
 
@@ -524,57 +497,53 @@ function render() {
 
 
 
-    //////////////////KONIEC OBLICZEŃ///////////////////////////
+    // ////////////////KONIEC OBLICZEŃ///////////////////////////
 
 
-    //////////////////USTAWIENIE KAMERY
+    // ////////////////USTAWIENIE KAMERY
 
     camera.position.copy(vEye);
     camera.up = vUp;
     camera.lookAt(vTarget);
 
-                
-    var s = <THREE.SpotLight>scene.getObjectByName(SPOT_LIGHT_NAME);
+
+    const s = scene.getObjectByName(SPOT_LIGHT_NAME) as SpotLight;
     s.position.copy(tails[0].location);
     s.target.position.copy(vTarget);
 
-    var d = <THREE.DirectionalLight>scene.getObjectByName(DIRECTIONAL_LIGHT_NAME);
+    const d = scene.getObjectByName(DIRECTIONAL_LIGHT_NAME) as DirectionalLight;
     d.position.copy(tails[0].location);
     d.target.position.copy(vTarget);
 
 
     // update stats
     stats.update();
-    
+
     // and render the scene
-    //renderer.render(scene, camera);
+    // renderer.render(scene, camera);
     renderer.autoClear = false;
     composer.render();
 
-//    requestAnimationFrame(render);
+    //    requestAnimationFrame(render);
     // render using requestAnimationFrame
-    if(control.delay === 0) {
+    if (control.delay === 0) {
         requestAnimationFrame(render);
     } else {
-        setTimeout(function() { requestAnimationFrame(render); }, control.delay);
+        setTimeout(() => requestAnimationFrame(render), control.delay);
     }
 }
 
-function randAppleLocation()
-{
-    var v = new THREE.Vector3();
+function randAppleLocation() {
+    const v = new Vector3();
 
-    var ok = true;
-    do
-    {
+    let ok = true;
+    do {
         ok = true;
         v.x = randomIntFromInterval((-SIZE_CUBE / 2.0 + RADIUS_SNAKE), (SIZE_CUBE / 2.0 - RADIUS_SNAKE));
         v.y = randomIntFromInterval((-SIZE_CUBE / 2.0 + RADIUS_SNAKE), (SIZE_CUBE / 2.0 - RADIUS_SNAKE));
         v.z = randomIntFromInterval((-SIZE_CUBE / 2.0 + RADIUS_SNAKE), (SIZE_CUBE / 2.0 - RADIUS_SNAKE));
-        for (var i = tails.length - 1; i >= 4; i -= 1)
-        {
-            if (tails[i].distance(v) < 2.0 * RADIUS_SNAKE)
-            {
+        for (let i = tails.length - 1; i >= 4; i -= 1) {
+            if (tails[i].distance(v) < 2.0 * RADIUS_SNAKE) {
                 ok = false;
                 break;
             }
@@ -582,55 +551,49 @@ function randAppleLocation()
     }
     while (!ok);
     apple.location = v;
-    var name = apple.getName();
-    var appleMesh = scene.getObjectByName(name);
+    const name = apple.getName();
+    const appleMesh = scene.getObjectByName(name);
     appleMesh.position.copy(v);
-    
+
     arrow.lookAt(apple.location);
 }
 
-function randomIntFromInterval(min, max)
-{
+function randomIntFromInterval(min, max) {
     return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
-function AbsPi(radians)
-{
-    if (radians > Math.PI * 2)
-    {
+function AbsPi(radians) {
+    if (radians > Math.PI * 2) {
         return radians - Math.PI * 2;
     }
-    else if (rotLeftRight < 0.0)
-    {
+    else if (rotLeftRight < 0.0) {
         return Math.PI * 2 + radians;
     }
     return radians;
 }
 
 
-function newGame()
-{
+function newGame() {
     rotLeftRight = 0.0;
     rotUpDown = 0.0;
     jumps = 0;
     point = 0;
 
-    for (var i = tails.length - 1; i >= 0; i -= 1) {
-        var tail = tails[i];
-        var obj = scene.getObjectByName(tail.getName());
+    for (let i = tails.length - 1; i >= 0; i -= 1) {
+        const tail = tails[i];
+        const obj = scene.getObjectByName(tail.getName());
         scene.remove(obj);
         tails.splice(i, 1);
     }
 
-    for (var i = 0; i < START_TAILS_SNAKE; i += 1)
-    {
+    for (let i = 0; i < START_TAILS_SNAKE; i += 1) {
         createTail();
     }
 
 
     randAppleLocation();
 
-    moveSnake = new THREE.Vector3(0, 0, 1);
+    moveSnake.copy(new Vector3(0, 0, 1));
     startGame = true;
     endGame = false;
     pause = false;
@@ -640,18 +603,18 @@ function newGame()
 }
 
 function createTail() {
-    var vector = new THREE.Vector3();
-    var i = tails.length;
+    let vector = new Vector3();
+    const i = tails.length;
     if (tails.length > 0)
         vector = tails[i - 1].location;
 
-    var tail = new Tail(TAIL_NAME + i, vector);
+        const tail = new Tail(TAIL_NAME + i, vector);
     tails.push(tail);
 
     // create a cube
-    var snakeGeometry = new THREE.SphereGeometry(RADIUS_SNAKE, SPHERE_FRAGMENT, SPHERE_FRAGMENT);
+    const snakeGeometry = new SphereGeometry(RADIUS_SNAKE, SPHERE_FRAGMENT, SPHERE_FRAGMENT);
 
-    var snake = new THREE.Mesh(snakeGeometry, materials.snakeMaterial);
+    const snake = new Mesh(snakeGeometry, materials.snakeMaterial);
     snake.name = tail.getName();
     snake.castShadow = true;
     snake.position.copy(tail.location);
@@ -728,13 +691,13 @@ function keyUp(event) {
     }
     else if (event.keyCode === 80) {
         pause = !pause;
-        
-        if(pause) {
+
+        if (pause) {
             updateCenterText("PAUZA");
         } else {
             updateCenterText("");
         }
-        
+
         console.log("p");
     }
     else if (event.keyCode === 188) {
@@ -758,16 +721,16 @@ function keyUp(event) {
 
 function initBrowser() {
     initInin();
-    
-    //arrow.rotation.x = 90 * Math.PI / 180;
-    //arrow.lookAt(new THREE.Vector3(apple.location.x, apple.location.y, apple.location.z));
+
+    // arrow.rotation.x = 90 * Math.PI / 180;
+    // arrow.lookAt(new Vector3(apple.location.x, apple.location.y, apple.location.z));
     // call the render function, after the first render, interval is determined
     // by requestAnimationFrame
     render();
-    
+
     // calls the handleResize function when the window is resized
     window.addEventListener('resize', handleResize, false);
-    // 
+
     window.addEventListener('keydown', keyDown, false);
     window.addEventListener('keyup', keyUp, false);
 }

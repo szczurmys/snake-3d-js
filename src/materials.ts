@@ -19,12 +19,12 @@ export const groundMaterial: MeshLambertMaterial = new MeshLambertMaterial({
     side: BackSide
 });
 
-//export const appleMaterial: MeshLambertMaterial = new MeshLambertMaterial({color: 'red'});
+// export const appleMaterial: MeshLambertMaterial = new MeshLambertMaterial({color: 'red'});
 export const appleMaterial: MeshLambertMaterial = new MeshLambertMaterial({
     map: new TextureLoader().load('./assets/textures/apple.png')
 });
 
-export const backgroundMaterial: MeshBasicMaterial = new MeshBasicMaterial({ 
-    map: new TextureLoader().load("./assets/textures/starry_background.jpg"), 
-    depthTest: false 
+export const backgroundMaterial: MeshBasicMaterial = new MeshBasicMaterial({
+    map: new TextureLoader().load("./assets/textures/starry_background.jpg"),
+    depthTest: false
 });
