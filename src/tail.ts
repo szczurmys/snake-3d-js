@@ -42,7 +42,7 @@ export default class Tail {
     }
 
     public distance(point: Vector3): number {
-        return Math.sqrt((this.location.x - point.x) * (this.location.x - point.x) + (this.location.y - point.y) * (this.location.y - point.y) + (this.location.z - point.z) * (this.location.z - point.z));
+        return this.location.distanceTo(point);
     }
 
     public distanceX(x: number): number {
@@ -58,6 +58,6 @@ export default class Tail {
     }
 
     public getName(): string {
-        return name;
+        return this.name;
     }
 }
