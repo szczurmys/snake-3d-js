@@ -1,27 +1,26 @@
-import * as THREE from 'three';
+import { Vector3 } from 'three';
 
-function LocationAndRotation(location, angleRightLeft, angleUpDown) {
-    'use strict';
-    this.location = location;
-    this.angleRightLeft = angleRightLeft;
-    this.angleUpDown = angleUpDown;
+
+class LocationAndRotation {
+    public constructor(public location: Vector3, public angleRightLeft: number, public angleUpDown: number) {
+    }
 }
 
-export default function Tail(nameObj, vector) {
-    'use strict';
-    var name = nameObj;
-    var lar = [];
+export default class Tail {
+
+    public location: Vector3;
+    public angleRightLeft: number = 0.0;
+    public angleUpDown: number = 0.0;
+    public canMove: boolean = false;
     
-    this.location = typeof vector !== 'undefined'
-        ? new THREE.Vector3(vector.x, vector.y, vector.z)
-        : new THREE.Vector3();
-    this.angleRightLeft = 0.0;
-    this.angleUpDown = 0.0;
 
-    this.canMove = false;
+    private lar: LocationAndRotation[] = []; 
 
+    public constructor(public readonly name: string, vector?: Vector3) {
+        this.location = vector || new Vector3();
+    }
 
-    this.Move = function (angleRightLeft, angleUpDown) {
+    public move(angleRightLeft: number, angleUpDown: number): Vector3 {
         angleUpDown = typeof angleUpDown !== 'undefined' ? angleUpDown : 0.0;
         this.angleRightLeft = angleRightLeft;
         this.angleUpDown = angleUpDown;
@@ -35,34 +34,33 @@ export default function Tail(nameObj, vector) {
         this.location.z += z;
 
 
-        return new THREE.Vector3(x, y, z);
+        return new Vector3(x, y, z);
     };
-    this.PushLocationAndRotation = function (location, angleRightLeft, angleUpDown) {
+    public pushLocationAndRotation(location: Vector3, angleRightLeft: number, angleUpDown: number): void {
         angleUpDown = typeof angleUpDown !== 'undefined' ? angleUpDown : 0.0;
-        location = new THREE.Vector3(location.x, location.y, location.z);
-        lar.push(new LocationAndRotation(location, angleRightLeft, angleUpDown));
+        location = new Vector3(location.x, location.y, location.z);
+        this.lar.push(new LocationAndRotation(location, angleRightLeft, angleUpDown));
     };
-    this.PopLocationAndRotation = function () {
-        var temp = lar.shift();
+    public popLocationAndRotation(): void {
+        var temp = this.lar.shift();
         this.location = temp.location;
         this.angleRightLeft = temp.angleRightLeft;
         this.angleUpDown = temp.angleUpDown;
     };
-    this.Distance = function (point) {
+    public distance(point: Vector3): number {
         return Math.sqrt((this.location.x - point.x) * (this.location.x - point.x) + (this.location.y - point.y) * (this.location.y - point.y) + (this.location.z - point.z) * (this.location.z - point.z));
     };
-    this.DistanceX = function (x) {
+    public distanceX(x: number): number {
         return Math.sqrt((this.location.x - x) * (this.location.x - x));
     };
-    this.DistanceY = function (y) {
+    public distanceY(y: number): number {
         return Math.sqrt((this.location.y - y) * (this.location.y - y));
     };
-    this.DistanceZ = function (z) {
+    public distanceZ(z: number): number {
         return Math.sqrt((this.location.z - z) * (this.location.z - z));
     };
     
-    this.getName = function () {
+    public getName(): string {
         return name;
     };
 }
-

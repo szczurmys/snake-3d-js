@@ -1,16 +1,16 @@
-import * as THREE from 'three';
+import { ExtrudeGeometryOptions, Vector2, Shape, ExtrudeGeometry, Matrix4 } from 'three';
 
-export default function Arrow3DGeometry(
-        widthHead,
-        heightHead,
-        widthShaft, 
-        heightShaft,
-        weight,
-        bevel) {
+export default function arrow3DGeometry(
+    widthHead: number,
+    heightHead: number,
+    widthShaft: number,
+    heightShaft: number,
+    weight: number,
+    bevel?: number): ExtrudeGeometry {
 
     bevel = (typeof bevel !== 'undefined') && bevel > 0 ? bevel : 0;
 
-    var extrudeSettings = {
+    var extrudeSettings: ExtrudeGeometryOptions = {
         depth: weight,
         bevelEnabled: bevel > 0,
         bevelSegments: bevel,
@@ -19,57 +19,57 @@ export default function Arrow3DGeometry(
         bevelThickness: 1
     };
 
-    var height = heightHead + heightShaft;
-    
-    var actualX; 
-    var actualY;
+    const height: number = heightHead + heightShaft;
+
+    var actualX: number;
+    var actualY: number;
 
 
-    var arrowPts = [];
-    
-    actualX = -widthShaft / 2; 
+    const arrowPts: Vector2[] = [];
+
+    actualX = -widthShaft / 2;
     actualY = -height / 2;
-    arrowPts.push(new THREE.Vector2(actualX, actualY));
+    arrowPts.push(new Vector2(actualX, actualY));
 
     actualY = actualY + heightShaft;
-    arrowPts.push(new THREE.Vector2(actualX, actualY));
-    
-    actualX = -widthHead / 2; 
-    arrowPts.push(new THREE.Vector2(actualX, actualY));
-    
-    actualX = 0; 
+    arrowPts.push(new Vector2(actualX, actualY));
+
+    actualX = -widthHead / 2;
+    arrowPts.push(new Vector2(actualX, actualY));
+
+    actualX = 0;
     actualY = actualY + heightHead;
-    arrowPts.push(new THREE.Vector2(actualX, actualY));
-    
-    actualX = widthHead / 2; 
+    arrowPts.push(new Vector2(actualX, actualY));
+
+    actualX = widthHead / 2;
     actualY = actualY - heightHead;
-    arrowPts.push(new THREE.Vector2(actualX, actualY));
-    
-    actualX = widthShaft / 2; 
-    arrowPts.push(new THREE.Vector2(actualX, actualY));
-    
-    actualY = -height / 2; 
-    arrowPts.push(new THREE.Vector2(actualX, actualY));
-    
-    actualX = arrowPts[0].x; 
+    arrowPts.push(new Vector2(actualX, actualY));
+
+    actualX = widthShaft / 2;
+    arrowPts.push(new Vector2(actualX, actualY));
+
+    actualY = -height / 2;
+    arrowPts.push(new Vector2(actualX, actualY));
+
+    actualX = arrowPts[0].x;
     actualY = arrowPts[0].y;
-    arrowPts.push(new THREE.Vector2(actualX, actualY));
-    
-    
+    arrowPts.push(new Vector2(actualX, actualY));
 
-    for (var i = 0; i < arrowPts.length; i ++)
-        arrowPts[ i ].multiplyScalar(0.25);
 
-    var shape = new THREE.Shape(arrowPts);
-    
-    var geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+
+    for (var i = 0; i < arrowPts.length; i++)
+        arrowPts[i].multiplyScalar(0.25);
+
+    const shape: Shape = new Shape(arrowPts);
+
+    const geometry = new ExtrudeGeometry(shape, extrudeSettings);
     geometry.center();
-    
-    var matrix = new THREE.Matrix4();
-    
-    matrix.makeRotationX( 90 * Math.PI / 180 );
-    
+
+    const matrix = new Matrix4();
+
+    matrix.makeRotationX(90 * Math.PI / 180);
+
     geometry.applyMatrix4(matrix);
-    
+
     return geometry;
 };

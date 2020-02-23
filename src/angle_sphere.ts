@@ -1,7 +1,7 @@
-export function AngleSphere() {
-    this.upDown = 0.0;
-    this.leftRight = 0.0;
-    this.ToString = function () {
+export default class AngleSphere {
+    public upDown: number = 0.0;
+    public leftRight: number = 0.0;
+    public toString(): string {
         return "UpDown=" + this.upDown +
                 ";LeftRight=" + this.leftRight + ";";
     };
