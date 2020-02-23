@@ -175,7 +175,7 @@ function initInin() {
     control = {
         newGame,
         delay: 20,
-        withdrwalBack: 17,
+        withdrwalBack: 16,
         withdrwalUp: 11,
         godMode: false,
         showHint: true,
