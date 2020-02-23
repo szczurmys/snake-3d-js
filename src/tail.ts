@@ -9,7 +9,7 @@ export default class Tail {
     private lar: {location: Vector3, angleRightLeft: number, angleUpDown: number}[] = [];
 
     public constructor(public readonly name: string, vector?: Vector3) {
-        this.location = vector || new Vector3();
+        this.location = vector && vector.clone() || new Vector3();
     }
 
     public move(angleRightLeft: number, angleUpDown: number): Vector3 {
