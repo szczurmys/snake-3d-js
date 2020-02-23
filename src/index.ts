@@ -6,79 +6,77 @@ import { CopyShader } from 'three/examples/jsm/shaders/CopyShader.js';
 import * as dat from 'dat.gui';
 import * as Stats from 'stats.js';
 
+
 import Tail from './tail';
 import SelectedDirection from './selected_direction';
-import AngleSphere from './angle_sphere';
-import Arrow3DGeometry from './arrow_3d';
+import arrow3DGeometry from './arrow_3d';
 import * as materials from './materials';
 
-var TAIL_NAME = "tails_";
-var APPLE_NAME = "apple";
 
-var SPOT_LIGHT_NAME = "spotLight";
-var DIRECTIONAL_LIGHT_NAME = "directionalLight";
+const TAIL_NAME: string = "tails_";
+const APPLE_NAME: string = "apple";
 
-var SPHERE_FRAGMENT = 40;
+const SPOT_LIGHT_NAME: string = "spotLight";
+const DIRECTIONAL_LIGHT_NAME: string = "directionalLight";
 
-var SKIP_FRAME = 0;
-var skipper = 0;
+const SPHERE_FRAGMENT: number = 40;
 
-var SIZE_CUBE = 200.0;
-var RADIUS_SNAKE = 2.0;
-var START_TAILS_SNAKE = 3;
-var INITIAL_JUMPS = 5;
+const SKIP_FRAME: number = 0;
+var skipper: number = 0;
+
+const SIZE_CUBE: number = 200.0;
+const RADIUS_SNAKE: number = 2.0;
+const START_TAILS_SNAKE: number = 3;
+const INITIAL_JUMPS: number = 5;
 
 // global variables
-var renderer;
-var scene;
-var camera;
+var renderer: THREE.WebGLRenderer;
+var scene: THREE.Scene;
+var camera: THREE.PerspectiveCamera;
 var control;
-var stats;
+var stats: Stats;
 
 
-var view = 0;
-var jumps = 0;
+var view: number = 0;
+var jumps: number = 0;
 
-var tails = [];
-var apple = new Tail(APPLE_NAME);
+var tails: Tail[] = [];
+var apple: Tail = new Tail(APPLE_NAME);
 
-var moveSnake = new THREE.Vector3(0, 0, 1);
-var vEye = new THREE.Vector3();
-var vTarget = new THREE.Vector3();
-var vUp = new THREE.Vector3(0.0, 1.0, 0.0);
-var vArrow = new THREE.Vector3(0.0, 0.0, 0.0);
+var moveSnake: THREE.Vector3 = new THREE.Vector3(0, 0, 1);
+var vEye: THREE.Vector3 = new THREE.Vector3();
+var vTarget: THREE.Vector3 = new THREE.Vector3();
+var vUp: THREE.Vector3 = new THREE.Vector3(0.0, 1.0, 0.0);
+var vArrow: THREE.Vector3 = new THREE.Vector3(0.0, 0.0, 0.0);
 
 
-var direction = new SelectedDirection();
+var direction: SelectedDirection = new SelectedDirection();
 
 
 
 // background stuff
-var cameraBG;
-var sceneBG;
-var composer;
-var clock;
-var canvas;
-var arrow;
+var cameraBG: THREE.OrthographicCamera;
+var sceneBG: THREE.Scene;
+var composer: EffectComposer;
+var arrow: THREE.Mesh;
 
 
 
-var rotLeftRight = 0.0;
-var rotUpDown = 0.0;
-var jumps = 0;
-var point = 0;
-var startGame = true;
-var endGame = false;
-var pause = false;
-var refreshText = true;
+var rotLeftRight: number = 0.0;
+var rotUpDown: number = 0.0;
+var jumps: number = 0;
+var point: number = 0;
+var startGame: boolean = true;
+var endGame: boolean = false;
+var pause: boolean = false;
+var refreshText: boolean = true;
 
 /**
  * Initializes the scene, camera and objects. Called when the window is
  * loaded by using window.onload (see below)
  */
 function initInin() {
-    var i;
-    for (i = 0; i < START_TAILS_SNAKE; i += 1) {
+    for (var i = 0; i < START_TAILS_SNAKE; i += 1) {
         tails.push(new Tail(TAIL_NAME + i));
     }
 
@@ -126,7 +124,7 @@ function initInin() {
 
     scene.add(appleMesh);
     
-    var arrowGeometry = new Arrow3DGeometry(
+    var arrowGeometry = arrow3DGeometry(
             10, 8,
             3, 10,
             0, 1
@@ -167,25 +165,25 @@ function initInin() {
 
 
     // setup the control object for the control gui
-    control = new function () {
-        this.newGame = newGame;
-        this.delay = 20;
-        this.withdrwalBack = 17;
-        this.withdrwalUp = 11;
-        this.godMode = false;
-        this.showHint = true;
-        this.addTenTail = function () {
+    control = new class {
+        public readonly newGame: Function = newGame;
+        public delay: number = 20;
+        public withdrwalBack: number = 17;
+        public withdrwalUp: number = 11;
+        public godMode: boolean = false;
+        public showHint: boolean = true;
+        public readonly addTenTail: Function = function () {
             var i;
             for (i = 0; i < 10; i += 1) {
                 createTail();
             }
             updatePoints();
         };
-        this.addOneTail = function () {
+        public readonly addOneTail: Function = function () {
             createTail();
             updatePoints();
         };
-        this.clearTail = function () {
+        public readonly clearTail: Function = function () {
             var i;
             for (i = tails.length - 1; i >= START_TAILS_SNAKE; i  -= 1) {
                 var t = tails[i];
@@ -197,7 +195,7 @@ function initInin() {
             updatePoints();
             return;
         };
-        this.help = function () {
+        public readonly help: Function = function () {
             window.alert("Pomoc: \r\n"
                     + "Sterowanie: WASD; \r\n"
                     + "Zmiana widoku kamery: C \r\n"
@@ -263,17 +261,17 @@ function addControlGui(controlObject) {
 }
 
 function updatePoints() {
-    var text2 = document.getElementById("points");
+    var text2: HTMLDivElement = <HTMLDivElement>document.getElementById("points");
     
     
-    if(text2 === null || text2.length <= 0) {
-        text2 = document.createElement('div');
+    if(!text2 || text2.innerHTML.length <= 0) {
+        text2 = <HTMLDivElement>document.createElement('div');
         text2.setAttribute("id", "points");
         text2.style.position = 'absolute';
-        text2.style.width = 100;
-        text2.style.height = 100;
+        text2.style.width = '100';
+        text2.style.height = '100';
         text2.style.color = "yellow";
-        text2.style.weight = "bold";
+        text2.style.fontWeight = "bold";
         text2.style.top = 0 + 'px';
         text2.style.left = 100 + 'px';
         text2.style.fontSize  = 20 + 'px';
@@ -288,17 +286,17 @@ function updatePoints() {
 
 function updateCenterText(text) {
     
-    var text2 = document.getElementById("gameInfo");
+    var text2: HTMLDivElement = <HTMLDivElement>document.getElementById("gameInfo");
     
     
-    if(text2 === null || text2.length <= 0) {
-        text2 = document.createElement('div');
+    if(!text2 || text2.innerHTML.length <= 0) {
+        text2 = <HTMLDivElement>document.createElement('div');
         text2.setAttribute("id", "gameInfo");
         text2.style.position = 'absolute';
-        text2.style.width = 200;
-        text2.style.height = 200;
+        text2.style.width = '200';
+        text2.style.height = '200';
         text2.style.color = "red";
-        text2.style.weight = "bold";
+        text2.style.fontWeight = "bold";
         text2.style.top = 200 + 'px';
         text2.style.left = 200 + 'px';
         text2.style.fontSize  = 60 + 'px';
@@ -311,13 +309,12 @@ function updateCenterText(text) {
 
 function addStatsObject() {
     stats = new Stats();
-    stats.setMode(0);
 
-    stats.domElement.style.position = 'absolute';
-    stats.domElement.style.left = '0px';
-    stats.domElement.style.top = '0px';
+    stats.dom.style.position = 'absolute';
+    stats.dom.style.left = '0px';
+    stats.dom.style.top = '0px';
 
-    document.body.appendChild(stats.domElement);
+    document.body.appendChild(stats.dom);
 }
 
 
@@ -394,7 +391,7 @@ function render() {
             tails[0].canMove = true;
 
             var previousLocation = tails[0].location;
-            moveSnake = tails[0].Move(rotLeftRight, rotUpDown);
+            moveSnake = tails[0].move(rotLeftRight, rotUpDown);
             var head = scene.getObjectByName(tails[0].getName());
             head.position.copy(tails[0].location);
             head.rotation.y = rotLeftRight;
@@ -403,7 +400,7 @@ function render() {
             for (var i = 1; i < tails.length; i += 1)
             {
                 if (!tails[i].canMove) {
-                    var distance = tails[i].Distance(tails[i - 1].location);
+                    var distance = tails[i].distance(tails[i - 1].location);
                     if (distance > 2.0 * RADIUS_SNAKE)
                     {
                         tails[i].canMove = true;
@@ -412,12 +409,12 @@ function render() {
 
                 if (tails[i - 1].canMove)
                 {
-                    tails[i].PushLocationAndRotation(tails[i - 1].location, tails[i - 1].angleRightLeft, tails[i - 1].angleUpDown);
+                    tails[i].pushLocationAndRotation(tails[i - 1].location, tails[i - 1].angleRightLeft, tails[i - 1].angleUpDown);
 
                     //tails[i].Move(tails[i - 1].angleRightLeft, tails[i - 1].angleUpDown);
                     if (tails[i].canMove)
                     {
-                        tails[i].PopLocationAndRotation();
+                        tails[i].popLocationAndRotation();
                     }
                 }
                 var t = scene.getObjectByName(tails[i].getName());
@@ -439,17 +436,17 @@ function render() {
     //sprawdzanie ugryzienia siebie
     if (!control.godMode)
     {
-        var l1 = tails[0].DistanceX(SIZE_CUBE / 2.0);
-        var l2 = tails[0].DistanceX(-SIZE_CUBE / 2.0);
-        var l3 = tails[0].DistanceY(SIZE_CUBE / 2.0);
-        var l4 = tails[0].DistanceY(-SIZE_CUBE / 2.0);
-        var l5 = tails[0].DistanceZ(SIZE_CUBE / 2.0);
-        var l6 = tails[0].DistanceZ(-SIZE_CUBE / 2.0);
+        var l1 = tails[0].distanceX(SIZE_CUBE / 2.0);
+        var l2 = tails[0].distanceX(-SIZE_CUBE / 2.0);
+        var l3 = tails[0].distanceY(SIZE_CUBE / 2.0);
+        var l4 = tails[0].distanceY(-SIZE_CUBE / 2.0);
+        var l5 = tails[0].distanceZ(SIZE_CUBE / 2.0);
+        var l6 = tails[0].distanceZ(-SIZE_CUBE / 2.0);
         
         wall = l1 <= RADIUS_SNAKE || l2 <= RADIUS_SNAKE || l3 <= RADIUS_SNAKE || l4 <= RADIUS_SNAKE || l5 <= RADIUS_SNAKE || l6 <= RADIUS_SNAKE;
         for (var i = tails.length - 1; i >= 3; i -= 1)
         {
-            if (tails[1].canMove && tails[i].Distance(tails[0].location) < 2.0 * RADIUS_SNAKE)
+            if (tails[1].canMove && tails[i].distance(tails[0].location) < 2.0 * RADIUS_SNAKE)
             {
                 bite = true;
                 break;
@@ -465,7 +462,7 @@ function render() {
         updateCenterText("Koniec gry!");
     }
     //sprawdzenie zdjedzenia pożywienia
-    if (apple.Distance(tails[0].location) < 2.0 * RADIUS_SNAKE)
+    if (apple.distance(tails[0].location) < 2.0 * RADIUS_SNAKE)
     {
         point += 1;
         randAppleLocation();
@@ -537,11 +534,11 @@ function render() {
     camera.lookAt(vTarget);
 
                 
-    var s = scene.getObjectByName(SPOT_LIGHT_NAME);
+    var s = <THREE.SpotLight>scene.getObjectByName(SPOT_LIGHT_NAME);
     s.position.copy(tails[0].location);
     s.target.position.copy(vTarget);
-            
-    var d = scene.getObjectByName(DIRECTIONAL_LIGHT_NAME);
+
+    var d = <THREE.DirectionalLight>scene.getObjectByName(DIRECTIONAL_LIGHT_NAME);
     d.position.copy(tails[0].location);
     d.target.position.copy(vTarget);
 
@@ -576,7 +573,7 @@ function randAppleLocation()
         v.z = randomIntFromInterval((-SIZE_CUBE / 2.0 + RADIUS_SNAKE), (SIZE_CUBE / 2.0 - RADIUS_SNAKE));
         for (var i = tails.length - 1; i >= 4; i -= 1)
         {
-            if (tails[i].Distance(v) < 2.0 * RADIUS_SNAKE)
+            if (tails[i].distance(v) < 2.0 * RADIUS_SNAKE)
             {
                 ok = false;
                 break;

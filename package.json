@@ -31,6 +31,8 @@
   },
   "homepage": "https://github.com/szczurmys/snake-3d-js#readme",
   "dependencies": {
+    "@types/dat.gui": "^0.7.5",
+    "@types/stats.js": "^0.17.0",
     "dat.gui": "^0.7.6",
     "lodash": "^4.17.15",
     "stats.js": "^0.17.0",
@@ -38,6 +40,8 @@
   },
   "devDependencies": {
     "copy-webpack-plugin": "^5.1.1",
+    "ts-loader": "^6.2.1",
+    "typescript": "^3.8.2",
     "webpack": "^4.41.6",
     "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^3.10.3"

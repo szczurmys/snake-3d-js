@@ -1,12 +1,13 @@
-export default function SelectedDirection() {
-    this.up = false;
-    this.down = false;
-    this.left = false;
-    this.right = false;
-    this.accRightLeft = false;
-    this.accUpDown = false;
-    this.alt = false;
-    this.ToString = function () {
+export default class SelectedDirection {
+    public up: boolean = false;
+    public down: boolean = false;
+    public left: boolean = false;
+    public right: boolean = false;
+    public accRightLeft: boolean = false;
+    public accUpDown: boolean = false;
+    public alt: boolean = false;
+
+    public toString(): string {
         return "Up=" + this.up +
                 ";Down=" + this.down +
                 ";Left=" + this.left +
