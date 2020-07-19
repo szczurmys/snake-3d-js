@@ -36,7 +36,7 @@
     "@types/dat.gui": "^0.7.5",
     "@types/stats.js": "^0.17.0",
     "dat.gui": "^0.7.6",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "stats.js": "^0.17.0",
     "three": "^0.113.2"
   },
